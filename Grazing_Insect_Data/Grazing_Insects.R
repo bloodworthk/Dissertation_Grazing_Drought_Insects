@@ -87,16 +87,26 @@ ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) ,
 
 #Merge S_Weight and D_Weight#
 Weight_Data<- D_Weight %>%
-  rbind(S_Weight)
+  rbind(S_Weight) %>% 
+  mutate(Order2=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",Order))) %>% 
+  mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
+  select(-Order,-Order2)
+  
 #remove blank rows in dataframe
 Weight_Data<-Weight_Data[-which(Weight_Data$Dry_Weight_g==""),]
 
-#seperate out Orthoptera ID into seperate Datasheet
+
+#seperate out Orthoptera ID into separate Datasheet
 Orthoptera_ID_Data<-ID_Data %>% 
   filter(Correct_Order=="Orthoptera")
 
 
-#Look at weight differences across 
+### Look at weight differences ####
+
+#Weight by Class
+Weight_Class<-Weight_Data %>% 
+  group_by(Grazing_Treatment,Block,Plot,Correct_Order) 
+#might need to add together some oder weights for each plot (if weighed seperately)
 
 
 
