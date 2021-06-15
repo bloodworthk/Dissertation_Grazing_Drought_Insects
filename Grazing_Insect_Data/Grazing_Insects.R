@@ -50,16 +50,54 @@ ID_Data<- S_ID %>%
   mutate(Correct_Genus=ifelse(Genus=="Melanoplus","Melanoplus",ifelse(Genus=="arphia","Arphia",ifelse(Genus=="melanoplus","Melanoplus",ifelse(Genus=="opeia","Opeia",ifelse(Genus=="nenconocephalus","Neoconocephalus",ifelse(Genus=="pachybrachis","Pachybrachis",ifelse(Genus=="ageneotettix ","Ageneotettix", ifelse(Genus=="phoetaliotes","Phoetaliotes",ifelse(Genus=="Ageneotettix ","Ageneotettix",ifelse(Genus=="amphiturnus","Amphiturnus",ifelse(Genus=="Ageneotettox","Ageneotettix",ifelse(Genus=="Agneotettix","Ageneotettix",ifelse(Genus=="ageneotettix","Ageneotettix",Genus)))))))))))))) %>% 
   mutate(Correct_Species=ifelse(Species=="differentalis","differentialis",ifelse(Species=="sanguinipes","sanguinipes",ifelse(Species=="packardi","packardii",ifelse(Species=="unknown","sp",Species))))) %>% 
   select(-Sub.order,-Class,-Family,-Genus,-Order,-Species)
+#remove blank rows in dataframe
+ID_Data<-ID_Data[-which(ID_Data$Correct_Class==""),]
+
+#### Check Data Sheets #### 
+#Ageneotettix_nebrascensis is a species for Sweepnet data, B3,NG, sample 17
+#Melanoplus_deorum is a species for Sweepnet data, B3, NG, sample 16
+#Melanoplus_nebrascensis is a species for Sweepnet data, B3, NG sample 7
+#Phoetaliotes_gladstoni is a species for Sweepnet data, B3, NG, sample 53
+#Phoetaliotes_sanguinipes is a species for Sweepnet data, B3, NG, sample 8
+
+#Change incorrect names in dataframe
+ID_Data_Correct<-ID_Data[53, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[54, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[64, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[774, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[775, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[780, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[781, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[790, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[791, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[792, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[793, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[794, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[62, "Correct_Species"] <- "packardii"
+ID_Data_Correct<-ID_Data[1372, "Correct_Species"] <- "sanguinipes"
+ID_Data_Correct<-ID_Data[171, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[253, "Correct_Species"] <- "sp"
+
+#create a new column with genus and species together
+ ID_Data_Correct<- ID_Data %>% 
+   mutate(Genus_Species=paste(Correct_Genus,Correct_Species,sep="_"))
+
+ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) , ])
+
 
 #Merge S_Weight and D_Weight#
 Weight_Data<- D_Weight %>%
   rbind(S_Weight)
+#remove blank rows in dataframe
+Weight_Data<-Weight_Data[-which(Weight_Data$Dry_Weight_g==""),]
 
 #seperate out Orthoptera ID into seperate Datasheet
 Orthoptera_ID_Data<-ID_Data %>% 
   filter(Correct_Order=="Orthoptera")
 
-unique(Orthoptera_ID_Data$Correct_Genus)
+
+#Look at weight differences across 
+
 
 
 
