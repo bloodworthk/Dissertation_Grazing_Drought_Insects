@@ -9,12 +9,24 @@ setwd("/Users/kathrynbloodworth/Dropbox (Smithsonian)/Projects/Dissertation/Data
 
 #Load Tidyverse#
 library(tidyverse)
+library(lmerTest)
 
 #### Load in data ####
 Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T)
 Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T)
 D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T)
 D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T)
+
+#Set ggplot2 theme to black and white
+theme_set(theme_bw())
+#Update ggplot2 theme - make box around the x-axis title size 30, vertically justify x-axis title to 0.35, Place a margin of 15 around the x-axis title.  Make the x-axis title size 30. For y-axis title, make the box size 30, put the writing at a 90 degree angle, and vertically justify the title to 0.5.  Add a margin of 15 and make the y-axis text size 25. Make the plot title size 30 and vertically justify it to 2.  Do not add any grid lines.  Do not add a legend title, and make the legend size 20
+theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)),
+             axis.text.x=element_text(size=30), axis.title.y=element_text(size=30, angle=90, vjust=0.5,
+                                                                          margin=margin(r=15)), axis.text.y=element_text(size=30), plot.title =
+               element_text(size=30, vjust=2), panel.grid.major=element_blank(),
+             panel.grid.minor=element_blank(), legend.title=element_blank(),
+             legend.text=element_text(size=30))
+
 
 #### Formatting Data ####
 
@@ -85,28 +97,196 @@ ID_Data_Correct<-ID_Data[253, "Correct_Species"] <- "sp"
 ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) , ])
 
 
-#Merge S_Weight and D_Weight#
-Weight_Data<- D_Weight %>%
-  rbind(S_Weight) %>% 
-  mutate(Order2=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",Order))) %>% 
-  mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
-  select(-Order,-Order2)
-  
-#remove blank rows in dataframe
-Weight_Data<-Weight_Data[-which(Weight_Data$Dry_Weight_g==""),]
-
-
 #seperate out Orthoptera ID into separate Datasheet
 Orthoptera_ID_Data<-ID_Data %>% 
   filter(Correct_Order=="Orthoptera")
 
 
-### Look at weight differences ####
+Weight_Data <- with(Weight_Data,  Weight_Data[order(Dry_Weight_g) , ])
 
-#Weight by Class
-Weight_Class<-Weight_Data %>% 
-  group_by(Grazing_Treatment,Block,Plot,Correct_Order) 
-#might need to add together some oder weights for each plot (if weighed seperately)
+
+#Merge S_Weight and D_Weight#
+Weight_Data<- D_Weight %>%
+  rbind(S_Weight) %>% 
+  mutate(Order2=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",Order))) %>% 
+  mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
+  #change values that are <0.0001 to 0.00005 for analysis
+#### Check why there are NAs for some weights ####
+  mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
+  select(-Order,-Order2,-Dry_Weight_g) %>% 
+  mutate(Treatment_Plot=paste(Dataset,Grazing_Treatment,Block,Plot,sep = "_"))
+  
+#remove blank rows in dataframe
+Weight_Data<-Weight_Data[-which(Weight_Data$Correct_Dry_Weight_g==""),]
+
+#make weights numeric not characters
+Weight_Data<-transform(Weight_Data, Correct_Dry_Weight_g = as.numeric(Correct_Dry_Weight_g))
+
+
+#### Look at weight differences ####
+
+#Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
+Weight_Data_Summed<-aggregate(Correct_Dry_Weight_g~Treatment_Plot+Correct_Order, data=Weight_Data, FUN=sum) 
+
+#Seperating out Treatment_Plot into all distinctions again so that we can group based on different things
+Weight_Data_Summed<-Weight_Data_Summed %>% 
+  separate(Treatment_Plot, c("Dataset", "Grazing_Treatment","Block","Plot"), "_")
+
+Weight_Data_Summed_S<-Weight_Data_Summed %>% 
+  filter(Dataset=="S")
+
+#### Anova comparing insect weights by grazing treatment  Sweep net #####
+Weight_Data_S_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_S) 
+summary(Weight_Data_S_AOV)
+model.tables(Weight_Data_S_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Weight_Data_S_AOV$residuals ~ Weight_Data_S_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Weight_Data_S_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Weight_Data_S_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+### Glmm for sweep net data ####
+Weight_Data_S_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = Weight_Data_Summed_S)
+summary(Weight_Data_S_GLMM)
+anova(Weight_Data_S_GLMM)
+
+####  Glmm for sweep net data by order too ####
+Weight_Data_S_Order_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment*Correct_Order + (1 | Block) , data = Weight_Data_Summed_S)
+summary(Weight_Data_S_Order_GLMM)
+anova(Weight_Data_S_Order_GLMM)
+
+
+### D-vac data
+Weight_Data_Summed_D<-Weight_Data_Summed %>% 
+  filter(Dataset=="D")
+
+#### Anova comparing insect weights by grazing treatment for d-vac #### 
+Weight_Data_D_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_D) 
+summary(Weight_Data_D_AOV)
+model.tables(Weight_Data_D_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Weight_Data_D_AOV$residuals ~ Weight_Data_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Weight_Data_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Weight_Data_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+#### Glmm for D-vac ####
+Weight_Data_D_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = Weight_Data_Summed_D)
+summary(Weight_Data_D_GLMM)
+anova(Weight_Data_D_GLMM)
+
+#### Glmm for D-vac with order ####
+Weight_Data_D_Order_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment*Correct_Order + (1 | Block) , data = Weight_Data_Summed_D)
+summary(Weight_Data_D_Order_GLMM)
+anova(Weight_Data_D_Order_GLMM)
+
+
+### Average by order across Grazing treatment ####
+Weight_by_Grazing<-Weight_Data_Summed %>% 
+  group_by(Dataset,Grazing_Treatment, Correct_Order) %>% 
+  summarise(Average_Weight=mean(Correct_Dry_Weight_g),Weight_SD=sd(Correct_Dry_Weight_g),Weight_n=length(Correct_Dry_Weight_g)) %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts")
+
+Weight_by_Grazing_S<-Weight_by_Grazing %>% 
+  filter(Dataset=="S")
+
+Weight_by_Grazing_D<-Weight_by_Grazing %>% 
+  filter(Dataset=="D")
+
+#Color Palette
+cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#999999")
+
+custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA", 
+                "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
+
+#### Graph of Weights from Sweep Net by Grazing treatment ####
+ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","NG"="No Grazing","LG"="Low Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=6)
+#Save at the graph at 1400x1500
+
+#### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
+ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",color="black")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.2)
+#Save at the graph at 1400x1500
+
+
+#### Graph of Weights from D-vac by Grazing treatment ####
+ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",color="black")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.3)
+#Save at the graph at 1400x1500
+
+#### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
+ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",color="black")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.020)
+#Save at the graph at 1400x1500
+
 
 
 
