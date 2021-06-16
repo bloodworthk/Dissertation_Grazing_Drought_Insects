@@ -32,7 +32,7 @@ theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)
 
 #make new dataframe for sweepnet ID changing block to numerical counts, and remnaming incorrect columns and adding dataset type and plot number (1) to columns
 S_ID<-Sweepnet_ID %>% 
-mutate(Block=ifelse(Grazing_Treatment=="B3",3,ifelse(Grazing_Treatment=="B2",2,1))) %>%
+  mutate(Block=ifelse(Grazing_Treatment=="B3",3,ifelse(Grazing_Treatment=="B2",2,1))) %>%
   mutate(Grazing_Treatment=Plot) %>%
   mutate(Plot=1) %>%
   mutate(Dataset="S")
@@ -91,8 +91,8 @@ ID_Data_Correct<-ID_Data[171, "Correct_Species"] <- "sp"
 ID_Data_Correct<-ID_Data[253, "Correct_Species"] <- "sp"
 
 #create a new column with genus and species together
- ID_Data_Correct<- ID_Data %>% 
-   mutate(Genus_Species=paste(Correct_Genus,Correct_Species,sep="_"))
+ID_Data_Correct<- ID_Data %>% 
+  mutate(Genus_Species=paste(Correct_Genus,Correct_Species,sep="_"))
 
 ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) , ])
 
@@ -111,11 +111,11 @@ Weight_Data<- D_Weight %>%
   mutate(Order2=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",Order))) %>% 
   mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
   #change values that are <0.0001 to 0.00005 for analysis
-#### Check why there are NAs for some weights ####
-  mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
+  #### Check why there are NAs for some weights ####
+mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
   select(-Order,-Order2,-Dry_Weight_g) %>% 
   mutate(Treatment_Plot=paste(Dataset,Grazing_Treatment,Block,Plot,sep = "_"))
-  
+
 #remove blank rows in dataframe
 Weight_Data<-Weight_Data[-which(Weight_Data$Correct_Dry_Weight_g==""),]
 
@@ -286,8 +286,3 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   #Make the y-axis extend to 50
   expand_limits(y=0.020)
 #Save at the graph at 1400x1500
-
-
-
-
-
