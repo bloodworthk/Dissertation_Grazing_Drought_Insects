@@ -37,21 +37,31 @@ S_ID<-Sweepnet_ID %>%
   mutate(Plot=1) %>%
   mutate(Dataset="S")
 
+#make sample numeric not characters
+S_ID<-transform(S_ID,Sample = as.numeric(Sample))
+
 # make new dataframe for sweepnet weights, changing block to correct denotion, adding plot number and dataset type
 S_Weight<- Sweepnet_weight %>%
   mutate(Block=ifelse(Plot=="B3",3,ifelse(Plot=="B2",2,1))) %>%
   mutate(Plot=1) %>%
   mutate(Dataset="S")
 
+#make sample numeric not characters
+S_Weight<-transform(S_Weight,Sample = as.numeric(Sample))
+
 # make new dataframe for Dvac ID changing block to correct denotion, and adding in dataset type
 D_ID<- D_Vac_ID %>%
   mutate(Block=ifelse(Block=="B3",3,ifelse(Block=="B2",2,1))) %>%
   mutate(Dataset="D")
 
+D_ID<-transform(D_ID,Sample = as.numeric(Sample))
+
 #make new dataframe for Dvac weights, renaming sample number so it is consistant and adding in dataset type
 D_Weight<-D_Vac_Weight %>%
   rename(Sample=Sample_num) %>%
   mutate(Dataset="D")
+
+D_Weight<-transform(D_Weight,Sample = as.numeric(Sample))
 
 #Merge S_ID and D_ID and fix names#
 ID_Data<- S_ID %>%
@@ -112,7 +122,7 @@ Weight_Data<- D_Weight %>%
   mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
   #change values that are <0.0001 to 0.00005 for analysis
   #### Check why there are NAs for some weights ####
-mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
+  mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
   select(-Order,-Order2,-Dry_Weight_g) %>% 
   mutate(Treatment_Plot=paste(Dataset,Grazing_Treatment,Block,Plot,sep = "_"))
 
@@ -286,3 +296,263 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   #Make the y-axis extend to 50
   expand_limits(y=0.020)
 #Save at the graph at 1400x1500
+
+#### Changes in Orthoptera genra by grazing treatment - Sweep net####
+## check datasheets for why there are NAs in following dataframe
+Weight_Orthoptera_S<-Weight_Data %>% 
+  filter(Correct_Order=="Orthoptera") %>% 
+  filter(Dataset=="S") %>% 
+  select(-Date,-Notes) %>% 
+  left_join(ID_Data_Correct) %>% 
+  filter(Correct_Family=="Acrididae") %>% 
+  na.omit(Correct_Genus)
+
+#make dataframe with sum of each genus of orthoptera summed by plot
+Weight_Orthoptera_S_Summed <- Weight_Orthoptera_S %>% 
+  group_by(Grazing_Treatment,Block, Plot,Correct_Genus) %>% 
+  summarise(Genus_Weight=sum(Correct_Dry_Weight_g)) %>% 
+  ungroup()
+
+#make table a graph looking at differences in genus weight by grazing treatment
+Weight_Orthoptera_Avg<-Weight_Orthoptera_S_Summed %>% 
+  group_by(Grazing_Treatment,Correct_Genus) %>% 
+  summarise(Average_Weight=mean(Genus_Weight),Weight_SD=sd(Genus_Weight),Weight_n=length(Genus_Weight)) %>% 
+  #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup()
+
+####assess differences in orthoptera Genera by grazing treatment using ANOVA####
+#### Anova comparing insect weights by grazing treatment for d-vac #### 
+Orthoptera_Genera_AOV <- aov(Genus_Weight ~ Grazing_Treatment*Correct_Genus, data = Weight_Orthoptera_S_Summed) 
+summary(Orthoptera_Genera_AOV)
+model.tables(Orthoptera_Genera_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Orthoptera_Genera_AOV$residuals ~ Orthoptera_Genera_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Orthoptera_Genera_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Orthoptera_Genera_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+#### Glmm for Orthoptera Weights by Genera####
+Orthoptera_Genera_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + (1 | Block) , data = Weight_Orthoptera_S_Summed)
+summary(Orthoptera_Genera_GLMM)
+anova(Orthoptera_Genera_GLMM)
+  
+#graph diference in genus weight by grazing treatment
+#### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
+ggplot(Weight_Orthoptera_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "stack")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
+  scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia","Melanoplus","Opeia","Phoetaliotes"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=6)
+#Save at the graph at 1400x1500
+
+
+#### Changes in Orthoptera genra by grazing treatment - D-Vac####
+## check datasheets for why there are NAs in following dataframe
+Weight_Orthoptera_D<-Weight_Data %>% 
+  filter(Correct_Order=="Orthoptera") %>% 
+  filter(Dataset=="D") %>% 
+  select(-Date,-Notes) %>% 
+  left_join(ID_Data_Correct) %>% 
+  filter(Correct_Family=="Acrididae") %>% 
+  na.omit(Correct_Genus)
+
+#make dataframe with sum of each genus of orthoptera summed by plot
+Weight_Orthoptera_D_Summed <- Weight_Orthoptera_D %>% 
+  group_by(Grazing_Treatment,Block, Plot,Correct_Genus) %>% 
+  summarise(Genus_Weight=sum(Correct_Dry_Weight_g)) %>% 
+  ungroup()
+
+#make table a graph looking at differences in genus weight by grazing treatment
+Weight_Orthoptera_D_Avg<-Weight_Orthoptera_D_Summed %>% 
+  group_by(Grazing_Treatment,Correct_Genus) %>% 
+  summarise(Average_Weight=mean(Genus_Weight),Weight_SD=sd(Genus_Weight),Weight_n=length(Genus_Weight)) %>% 
+  #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup()
+
+####assess differences in orthoptera Genera by grazing treatment using ANOVA - D-vac####
+#### Anova comparing insect weights by grazing treatment for d-vac #### 
+Orthoptera_Genera_D_AOV <- aov(Genus_Weight ~ Grazing_Treatment*Correct_Genus, data = Weight_Orthoptera_D_Summed) 
+summary(Orthoptera_Genera_D_AOV)
+model.tables(Orthoptera_Genera_D_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Orthoptera_Genera_D_AOV$residuals ~ Orthoptera_Genera_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Orthoptera_Genera_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Orthoptera_Genera_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+#### Glmm for Orthoptera Weights by Genera####
+Orthoptera_Genera_D_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + (1 | Block) , data = Weight_Orthoptera_D_Summed)
+summary(Orthoptera_Genera_D_GLMM)
+anova(Orthoptera_Genera_D_GLMM)
+
+#graph diference in genus weight by grazing treatment
+#### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
+ggplot(Weight_Orthoptera_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "dodge"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
+  scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"))+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.4)
+#Save at the graph at 1400x1500
+
+#### Differences in total plot arthropod weight by grazing treatment - SweepNet ####
+
+#make new dataframe to sum total plot weight
+Plot_Weight_S<-Weight_Data %>%
+  filter(Dataset=="S") %>%
+  group_by(Grazing_Treatment,Block,Plot) %>% 
+  summarise(Plot_Weight=sum(Correct_Dry_Weight_g)) %>% 
+  ungroup()
+
+#make table a graph looking at differences in genus weight by grazing treatment
+Plot_Weight_S_Avg<-Plot_Weight_S %>% 
+  group_by(Grazing_Treatment) %>% 
+  summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
+  #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup()
+
+####assess differences in plot weight by grazing treatment using ANOVA - SweepNet####
+#### Anova comparing insect weights by grazing treatment for sweepnet #### 
+Plot_Weight_S_AOV <- aov(Plot_Weight ~ Grazing_Treatment, data = Plot_Weight_S) 
+summary(Plot_Weight_S_AOV)
+model.tables(Plot_Weight_S_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Plot_Weight_S_AOV$residuals ~ Plot_Weight_S_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Plot_Weight_S_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Plot_Weight_S_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+#### Glmm for Plot Weights by Grazing Treatment####
+Plot_Weight_S_GLMM <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = Plot_Weight_S)
+summary(Plot_Weight_S_GLMM)
+anova(Plot_Weight_S_GLMM)
+
+#graph diference inplot weight by grazing treatment
+#### Graph of Weights from sweepnet by Grazing treatment  ####
+ggplot(Plot_Weight_S_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "dodge",fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)
+#Save at the graph at 1400x1500
+
+#### Differences in total plot arthropod weight by grazing treatment - D-Vac ####
+
+#make new dataframe to sum total plot weight
+Plot_Weight_D<-Weight_Data %>%
+  filter(Dataset=="D") %>%
+  #check why plot is NA for one entry
+  drop_na(Correct_Dry_Weight_g,Plot) %>% 
+  group_by(Grazing_Treatment,Block,Plot) %>% 
+  summarise(Plot_Weight=sum(Correct_Dry_Weight_g)) %>% 
+  ungroup()
+
+#make table a graph looking at differences in genus weight by grazing treatment
+Plot_Weight_D_Avg<-Plot_Weight_D %>% 
+  group_by(Grazing_Treatment) %>% 
+  summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
+  #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup()
+
+####assess differences in plot weight by grazing treatment using ANOVA - D-Vac####
+#### Anova comparing insect weights by grazing treatment for d-vac #### 
+Plot_Weight_D_AOV <- aov(Plot_Weight ~ Grazing_Treatment, data = Plot_Weight_D) 
+summary(Plot_Weight_D_AOV)
+model.tables(Plot_Weight_D_AOV)
+
+#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+
+plot2<-par(mfrow=c(2,2))
+
+
+## b. scatterplot of the residuals vs. fitted values    for the model
+plot(Plot_Weight_D_AOV$residuals ~ Plot_Weight_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+abline(h = 0, lty = 3)
+
+## c. histogram of the residuals
+hist(Plot_Weight_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+## d. Q-Q plot
+plot(Plot_Weight_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+
+#### Glmm for Plot Weights by Grazing Treatment####
+Plot_Weight_D_GLMM <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = Plot_Weight_D)
+summary(Plot_Weight_D_GLMM)
+anova(Plot_Weight_D_GLMM)
+
+#graph diference inplot weight by grazing treatment
+#### Graph of Weights from sweepnet by Grazing treatment  ####
+ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "dodge",fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
+  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)
+#Save at the graph at 1400x1500
+  
