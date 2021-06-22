@@ -33,7 +33,7 @@ theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)
 #make new dataframe for sweepnet ID changing block to numerical counts, and remnaming incorrect columns and adding dataset type and plot number (1) to columns
 S_ID<-Sweepnet_ID %>% 
   mutate(Block=ifelse(Grazing_Treatment=="B3",3,ifelse(Grazing_Treatment=="B2",2,1))) %>%
-  mutate(Grazing_Treatment=Plot) %>%
+  mutate(Grazing_Treatment=ifelse(Plot=="NG",0,ifelse(Plot=="LG",1,ifelse(Plot=="HG",2,Plot)))) %>%
   mutate(Plot=1) %>%
   mutate(Dataset="S")
 
@@ -43,6 +43,7 @@ S_ID<-transform(S_ID,Sample = as.numeric(Sample))
 # make new dataframe for sweepnet weights, changing block to correct denotion, adding plot number and dataset type
 S_Weight<- Sweepnet_weight %>%
   mutate(Block=ifelse(Plot=="B3",3,ifelse(Plot=="B2",2,1))) %>%
+  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="NG",0,ifelse(Grazing_Treatment=="LG",1,ifelse(Grazing_Treatment=="HG",2,Grazing_Treatment)))) %>%
   mutate(Plot=1) %>%
   mutate(Dataset="S")
 
@@ -52,6 +53,7 @@ S_Weight<-transform(S_Weight,Sample = as.numeric(Sample))
 # make new dataframe for Dvac ID changing block to correct denotion, and adding in dataset type
 D_ID<- D_Vac_ID %>%
   mutate(Block=ifelse(Block=="B3",3,ifelse(Block=="B2",2,1))) %>%
+  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="NG",0,ifelse(Grazing_Treatment=="LG",1,ifelse(Grazing_Treatment=="HG",2,Grazing_Treatment)))) %>%
   mutate(Dataset="D")
 
 D_ID<-transform(D_ID,Sample = as.numeric(Sample))
@@ -59,6 +61,7 @@ D_ID<-transform(D_ID,Sample = as.numeric(Sample))
 #make new dataframe for Dvac weights, renaming sample number so it is consistant and adding in dataset type
 D_Weight<-D_Vac_Weight %>%
   rename(Sample=Sample_num) %>%
+  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="NG",0,ifelse(Grazing_Treatment=="LG",1,ifelse(Grazing_Treatment=="HG",2,Grazing_Treatment)))) %>%
   mutate(Dataset="D")
 
 D_Weight<-transform(D_Weight,Sample = as.numeric(Sample))
@@ -111,10 +114,6 @@ ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) ,
 Orthoptera_ID_Data<-ID_Data %>% 
   filter(Correct_Order=="Orthoptera")
 
-
-Weight_Data <- with(Weight_Data,  Weight_Data[order(Dry_Weight_g) , ])
-
-
 #Merge S_Weight and D_Weight#
 Weight_Data<- D_Weight %>%
   rbind(S_Weight) %>% 
@@ -131,6 +130,7 @@ Weight_Data<-Weight_Data[-which(Weight_Data$Correct_Dry_Weight_g==""),]
 
 #make weights numeric not characters
 Weight_Data<-transform(Weight_Data, Correct_Dry_Weight_g = as.numeric(Correct_Dry_Weight_g))
+Weight_Data<-transform(Weight_Data, Sample = as.character(Sample))
 
 
 #### Look at weight differences ####
@@ -242,7 +242,7 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","NG"="No Grazing","LG"="Low Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=6)
@@ -258,7 +258,7 @@ ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=0.2)
@@ -275,7 +275,7 @@ ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=0.3)
@@ -291,7 +291,7 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=0.020)
@@ -359,7 +359,7 @@ ggplot(Weight_Orthoptera_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Corr
   ylab("Average Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
   scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia","Melanoplus","Opeia","Phoetaliotes"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=6)
@@ -428,7 +428,7 @@ ggplot(Weight_Orthoptera_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   ylab("Average Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
   scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"))+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=0.4)
@@ -488,7 +488,7 @@ ggplot(Plot_Weight_S_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=8)
@@ -550,7 +550,7 @@ ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   #Label the y-axis "Species Richness"
   ylab("Average Plot Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_x_discrete(labels=c("HG"="High Graznig","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
   expand_limits(y=0.5)
