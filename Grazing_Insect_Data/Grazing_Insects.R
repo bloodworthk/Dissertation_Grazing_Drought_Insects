@@ -4,18 +4,25 @@
 
 #### Set working directory and load libraries ####
 
-# Set Working Directory)
+# Set Working Directory - Mac
 setwd("/Users/kathrynbloodworth/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
+
+#PC
+setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
 #Load Tidyverse#
 library(tidyverse)
 library(lmerTest)
 
 #### Load in data ####
-Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T)
-Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T)
-D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T)
-D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T)
+Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) %>% 
+  rename(Grazing_Treatment=ï..Grazing_Treatment)
+Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) %>% 
+  rename(Grazing_Treatment=ï..Grazing_Treatment)
+D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) %>% 
+  rename(Grazing_Treatment=ï..Grazing_Treatment)
+D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) %>% 
+  rename(Grazing_Treatment=ï..Grazing_Treatment)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -74,16 +81,17 @@ ID_Data<- S_ID %>%
   mutate(Correct_Family=ifelse(Family=="acrididae", "Acrididae",ifelse(Family=="cicadellidae", "Cicadellidae", ifelse(Family=="geocoridae", "Geocordidae", ifelse(Family=="carabidae", "Carabidae", ifelse(Family=="chrysomelidae","Chrysomelidae", ifelse(Family=="formicidae", "Formicidae", ifelse(Family=="halictidae", "Halictidae", ifelse(Family=="agromyzidae", "Agromyzidae", ifelse(Family=="lycosidae", "Lycosidae", ifelse(Family=="platygastridae", "Platygastridae", ifelse(Family=="tettigoniidae", "Tettigoniidae", ifelse(Family=="salticidae", "Salticidae", ifelse(Family=="thomisidae", "Thomisidae", ifelse(Family=="pentatomidae", "Pentatomidae", ifelse(Family=="lygaeidae", "Lygaeidae", ifelse(Family=="scutelleridae", "Scutelleridae", ifelse(Family=="gryllidae", "Gryllidae", ifelse(Family=="asilidae", "Asilidae", ifelse(Family=="chrysididae", "Chrysididae", ifelse(Family=="curculionidae", "Curculionidae", ifelse(Family=="latridiidae","Latridiidae", ifelse(Family=="muscidae", "Muscidae", ifelse(Family=="tenebrionidae", "Tenebrionidae",Family)))))))))))))))))))))))) %>% 
   mutate(Correct_Genus=ifelse(Genus=="Melanoplus","Melanoplus",ifelse(Genus=="arphia","Arphia",ifelse(Genus=="melanoplus","Melanoplus",ifelse(Genus=="opeia","Opeia",ifelse(Genus=="nenconocephalus","Neoconocephalus",ifelse(Genus=="pachybrachis","Pachybrachis",ifelse(Genus=="ageneotettix ","Ageneotettix", ifelse(Genus=="phoetaliotes","Phoetaliotes",ifelse(Genus=="Ageneotettix ","Ageneotettix",ifelse(Genus=="amphiturnus","Amphiturnus",ifelse(Genus=="Ageneotettox","Ageneotettix",ifelse(Genus=="Agneotettix","Ageneotettix",ifelse(Genus=="ageneotettix","Ageneotettix",Genus)))))))))))))) %>% 
   mutate(Correct_Species=ifelse(Species=="differentalis","differentialis",ifelse(Species=="sanguinipes","sanguinipes",ifelse(Species=="packardi","packardii",ifelse(Species=="unknown","sp",Species))))) %>% 
-  select(-Sub.order,-Class,-Family,-Genus,-Order,-Species)
+  select(-Sub.order,-Class,-Family,-Genus,-Order,-Species) %>% 
+  mutate(Genus_Species=paste(Correct_Genus,Correct_Species,sep="_"))
 #remove blank rows in dataframe
 ID_Data<-ID_Data[-which(ID_Data$Correct_Class==""),]
 
 #### Check Data Sheets #### 
-#Ageneotettix_nebrascensis is a species for Sweepnet data, B3,NG, sample 17
-#Melanoplus_deorum is a species for Sweepnet data, B3, NG, sample 16
-#Melanoplus_nebrascensis is a species for Sweepnet data, B3, NG sample 7
-#Phoetaliotes_gladstoni is a species for Sweepnet data, B3, NG, sample 53
-#Phoetaliotes_sanguinipes is a species for Sweepnet data, B3, NG, sample 8
+#Ageneotettix_nebrascensis is a species for Sweepnet data, B3,NG, sample 17 - should be phoetaliotes nebrascensis - fixed
+#Melanoplus_deorum is a species for Sweepnet data, B3, NG, sample 16 - - should be ageneotettix deorum - fixed
+#Melanoplus_nebrascensis is a species for Sweepnet data, B3, NG sample 7 - should be phoetaliotes nebrascensis - fixed
+#Phoetaliotes_gladstoni is a species for Sweepnet data, B3, NG, sample 18 - should be melanoplus gladstoni-
+#Phoetaliotes_sanguinipes is a species for Sweepnet data, B3, NG, sample 8 - should be melanoplus sanguinipes - fixed
 
 #Change incorrect names in dataframe
 ID_Data_Correct<-ID_Data[53, "Correct_Species"] <- "sp"
@@ -102,6 +110,12 @@ ID_Data_Correct<-ID_Data[62, "Correct_Species"] <- "packardii"
 ID_Data_Correct<-ID_Data[1372, "Correct_Species"] <- "sanguinipes"
 ID_Data_Correct<-ID_Data[171, "Correct_Species"] <- "sp"
 ID_Data_Correct<-ID_Data[253, "Correct_Species"] <- "sp"
+ID_Data_Correct<-ID_Data[266, "Correct_Genus"] <- "Phoetaliotes"
+ID_Data_Correct<-ID_Data[1072, "Correct_Genus"] <- "Ageneotettix"
+ID_Data_Correct<-ID_Data[264, "Correct_Genus"] <- "Phoetaliotes"
+ID_Data_Correct<-ID_Data[41, "Correct_Genus"] <- "Melanoplus"
+ID_Data_Correct<-ID_Data[992, "Correct_Genus"] <- "Melanoplus"
+
 
 #create a new column with genus and species together
 ID_Data_Correct<- ID_Data %>% 
@@ -120,7 +134,7 @@ Weight_Data<- D_Weight %>%
   mutate(Order2=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",Order))) %>% 
   mutate(Correct_Order=ifelse(Order2=="Aranea","Araneae",ifelse(Order2=="Hempitera","Hemiptera",ifelse(Order2=="Lyaceidae","Lygaeidae",ifelse(Order2=="Aranaea","Araneae",ifelse(Order2=="","Orthoptera",Order2)))))) %>% 
   #change values that are <0.0001 to 0.00005 for analysis
-  #### Check why there are NAs for some weights ####
+  #### Check why there are NAs for some weights #### these two (B3-HG-3 sample 28 and 29) were just heads so they were put into body parts. remove from weight and ID data
   mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
   select(-Order,-Order2,-Dry_Weight_g) %>% 
   mutate(Treatment_Plot=paste(Dataset,Grazing_Treatment,Block,Plot,sep = "_"))
@@ -298,7 +312,7 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
 #Save at the graph at 1400x1500
 
 #### Changes in Orthoptera genra by grazing treatment - Sweep net####
-## check datasheets for why there are NAs in following dataframe
+## check datasheets for why there are NAs in following dataframe - don't see NAs now
 Weight_Orthoptera_S<-Weight_Data %>% 
   filter(Correct_Order=="Orthoptera") %>% 
   filter(Dataset=="S") %>% 
