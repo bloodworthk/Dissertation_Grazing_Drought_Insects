@@ -7,7 +7,7 @@
 # Set Working Directory - Mac
 setwd("/Users/kathrynbloodworth/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
-#PC
+# set working directory - PC
 setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
 #Load Tidyverse#
@@ -116,13 +116,11 @@ ID_Data_Correct<-ID_Data[264, "Correct_Genus"] <- "Phoetaliotes"
 ID_Data_Correct<-ID_Data[41, "Correct_Genus"] <- "Melanoplus"
 ID_Data_Correct<-ID_Data[992, "Correct_Genus"] <- "Melanoplus"
 
-
 #create a new column with genus and species together
 ID_Data_Correct<- ID_Data %>% 
   mutate(Genus_Species=paste(Correct_Genus,Correct_Species,sep="_"))
 
 ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) , ])
-
 
 #seperate out Orthoptera ID into separate Datasheet
 Orthoptera_ID_Data<-ID_Data %>% 
