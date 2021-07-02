@@ -7,7 +7,8 @@
 # Set Working Directory - Mac
 setwd("/Users/kathrynbloodworth/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
-# set working directory - PC
+
+#PC
 setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
 #Load Tidyverse#
@@ -92,6 +93,7 @@ ID_Data<-ID_Data[-which(ID_Data$Correct_Class==""),]
 #Melanoplus_nebrascensis is a species for Sweepnet data, B3, NG sample 7 - should be phoetaliotes nebrascensis - fixed
 #Phoetaliotes_gladstoni is a species for Sweepnet data, B3, NG, sample 18 - should be melanoplus gladstoni-
 #Phoetaliotes_sanguinipes is a species for Sweepnet data, B3, NG, sample 8 - should be melanoplus sanguinipes - fixed
+
 
 #Change incorrect names in dataframe
 ID_Data_Correct<-ID_Data[53, "Correct_Species"] <- "sp"
