@@ -16,13 +16,13 @@ library(tidyverse)
 library(lmerTest)
 
 #### Load in data ####
-Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) %>% 
+Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
   rename(Grazing_Treatment=ï..Grazing_Treatment)
-Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) %>% 
+Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) #%>% 
   rename(Grazing_Treatment=ï..Grazing_Treatment)
-D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) %>% 
+D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) #%>% 
   rename(Grazing_Treatment=ï..Grazing_Treatment)
-D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) %>% 
+D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>% 
   rename(Grazing_Treatment=ï..Grazing_Treatment)
 
 #Set ggplot2 theme to black and white
@@ -124,6 +124,9 @@ ID_Data_Correct<- ID_Data %>%
 
 ID_Data_Correct <- with(ID_Data_Correct,  ID_Data_Correct[order(Genus_Species) , ])
 
+ID_Data_Correct<-transform(ID_Data_Correct, Sample = as.character(Sample))
+
+
 #seperate out Orthoptera ID into separate Datasheet
 Orthoptera_ID_Data<-ID_Data %>% 
   filter(Correct_Order=="Orthoptera")
@@ -195,34 +198,42 @@ Weight_Data_Summed_D<-Weight_Data_Summed %>%
   filter(Dataset=="D")
 
 #### Anova comparing insect weights by grazing treatment for d-vac #### 
-Weight_Data_D_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_D) 
-summary(Weight_Data_D_AOV)
-model.tables(Weight_Data_D_AOV)
+#Weight_Data_D_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_D) 
+#summary(Weight_Data_D_AOV)
+#model.tables(Weight_Data_D_AOV)
 
 #Create a 4-panel plot that contains the following in this order (clockwise from upper left)
 
-plot2<-par(mfrow=c(2,2))
+#plot2<-par(mfrow=c(2,2))
 
 
 ## b. scatterplot of the residuals vs. fitted values    for the model
-plot(Weight_Data_D_AOV$residuals ~ Weight_Data_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
-abline(h = 0, lty = 3)
+#plot(Weight_Data_D_AOV$residuals ~ Weight_Data_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
+#abline(h = 0, lty = 3)
 
 ## c. histogram of the residuals
-hist(Weight_Data_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+#hist(Weight_Data_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
 
 ## d. Q-Q plot
-plot(Weight_Data_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+#plot(Weight_Data_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
 
 #### Glmm for D-vac ####
-Weight_Data_D_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = Weight_Data_Summed_D)
-summary(Weight_Data_D_GLMM)
-anova(Weight_Data_D_GLMM)
+#Weight_Data_D_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = Weight_Data_Summed_D)
+#summary(Weight_Data_D_GLMM)
+#anova(Weight_Data_D_GLMM)
+
+#install.packages("multcomp")
+library(multcomp)
+library(emmeans)
 
 #### Glmm for D-vac with order ####
 Weight_Data_D_Order_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment*Correct_Order + (1 | Block) , data = Weight_Data_Summed_D)
 summary(Weight_Data_D_Order_GLMM)
-anova(Weight_Data_D_Order_GLMM)
+Weight_Data_D_Order_GLMM_Model<-anova(Weight_Data_D_Order_GLMM)
+summary(Weight_Data_D_Order_GLMM_Model)
+#tukey's post hoc test
+emmeans(Weight_Data_D_Order_GLMM_Model, adjust = "tukey")
+TukeyHSD(Weight_Data_D_Order_GLMM_Model)
 
 
 ### Average by order across Grazing treatment ####
