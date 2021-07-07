@@ -14,6 +14,7 @@ setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_D
 #Load Tidyverse#
 library(tidyverse)
 library(lmerTest)
+library(nationalparkcolors)
 
 #### Load in data ####
 Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
@@ -28,12 +29,8 @@ D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>%
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
 #Update ggplot2 theme - make box around the x-axis title size 30, vertically justify x-axis title to 0.35, Place a margin of 15 around the x-axis title.  Make the x-axis title size 30. For y-axis title, make the box size 30, put the writing at a 90 degree angle, and vertically justify the title to 0.5.  Add a margin of 15 and make the y-axis text size 25. Make the plot title size 30 and vertically justify it to 2.  Do not add any grid lines.  Do not add a legend title, and make the legend size 20
-theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)),
-             axis.text.x=element_text(size=30), axis.title.y=element_text(size=30, angle=90, vjust=0.5,
-                                                                          margin=margin(r=15)), axis.text.y=element_text(size=30), plot.title =
-               element_text(size=30, vjust=2), panel.grid.major=element_blank(),
-             panel.grid.minor=element_blank(), legend.title=element_blank(),
-             legend.text=element_text(size=30))
+theme_update(panel.grid.major=element_blank(),
+             panel.grid.minor=element_blank(), legend.title=element_blank())
 
 
 #### Formatting Data ####
@@ -257,6 +254,28 @@ cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00"
 custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA", 
                 "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
 
+# Developmental version
+devtools::install_github("riatelab/cartography")
+# CRAN version
+install.packages("cartography")
+library(cartography)
+display.carto.all()
+pastel<-carto.pal(pal1="pastel.pal",n1=8)
+
+# CRAN version
+install.packages("nord")
+library(nord)
+prairie<-nord(palette="afternoon_prarie")
+
+install.packages("RColorBrewer")
+library(RColorBrewer)
+display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
+                   colorblindFriendly=TRUE)
+Set2<-brewer.pal(8, "Set2")
+Paired<-brewer.pal(8, "Paired")
+Dark2<-brewer.pal(8, "Dark2")
+
+
 #### Graph of Weights from Sweep Net by Grazing treatment ####
 ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
@@ -266,11 +285,12 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
-  expand_limits(y=6)
+  expand_limits(y=6)+
+  theme(text = element_text(size = 45))   
 #Save at the graph at 1400x1500
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
@@ -327,9 +347,8 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
 Weight_Orthoptera_S<-Weight_Data %>% 
   filter(Correct_Order=="Orthoptera") %>% 
   filter(Dataset=="S") %>% 
-  select(-Date,-Notes) %>% 
   left_join(ID_Data_Correct) %>% 
-  filter(Correct_Family=="Acrididae") %>% 
+  filter(Correct_Family=="Acrididae") %>%
   na.omit(Correct_Genus)
 
 #make dataframe with sum of each genus of orthoptera summed by plot
@@ -511,13 +530,16 @@ ggplot(Plot_Weight_S_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
+  ylab("Average Plot Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  scale_x_discrete(labels=c("2"="High Grazing","1"="Low Grazing","0"="No Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
+  theme(legend.position="none")+
+  annotate("text",x=1.27,y=8,label="a.Sweep Net Samples",size=20)+
   #Make the y-axis extend to 50
-  expand_limits(y=8)
-#Save at the graph at 1400x1500
+  expand_limits(y=8)+
+  theme(text = element_text(size = 45))  
+#Save at the graph at 1500x1500
 
 #### Differences in total plot arthropod weight by grazing treatment - D-Vac ####
 
@@ -576,8 +598,11 @@ ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   ylab("Average Plot Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
+  theme(legend.position="none")+
+  annotate("text",x=1.2,y=0.4,label="b.Vacuum Samples",size=20)+
   #Make the y-axis extend to 50
-  expand_limits(y=0.5)
-#Save at the graph at 1400x1500
+  expand_limits(y=0.4)+
+  theme(text = element_text(size = 45))   
+#Save at the graph at 1500x1500
   
