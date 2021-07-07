@@ -13,7 +13,9 @@ setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_D
 
 #Load Tidyverse#
 library(tidyverse)
+library(vegan)
 library(lmerTest)
+library(nationalparkcolors)
 
 #### Load in data ####
 Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
@@ -28,12 +30,8 @@ D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>%
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
 #Update ggplot2 theme - make box around the x-axis title size 30, vertically justify x-axis title to 0.35, Place a margin of 15 around the x-axis title.  Make the x-axis title size 30. For y-axis title, make the box size 30, put the writing at a 90 degree angle, and vertically justify the title to 0.5.  Add a margin of 15 and make the y-axis text size 25. Make the plot title size 30 and vertically justify it to 2.  Do not add any grid lines.  Do not add a legend title, and make the legend size 20
-theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)),
-             axis.text.x=element_text(size=30), axis.title.y=element_text(size=30, angle=90, vjust=0.5,
-                                                                          margin=margin(r=15)), axis.text.y=element_text(size=30), plot.title =
-               element_text(size=30, vjust=2), panel.grid.major=element_blank(),
-             panel.grid.minor=element_blank(), legend.title=element_blank(),
-             legend.text=element_text(size=30))
+theme_update(panel.grid.major=element_blank(),
+             panel.grid.minor=element_blank(), legend.title=element_blank())
 
 
 #### Formatting Data ####
@@ -139,7 +137,7 @@ Weight_Data<- D_Weight %>%
   #change values that are <0.0001 to 0.00005 for analysis
   #### Check why there are NAs for some weights #### these two (B3-HG-3 sample 28 and 29) were just heads so they were put into body parts. remove from weight and ID data
   mutate(Correct_Dry_Weight_g=ifelse(Dry_Weight_g=="<0.0001","0.00005",ifelse(Dry_Weight_g=="<0.001","0.00005", Dry_Weight_g))) %>% 
-  select(-Order,-Order2,-Dry_Weight_g) %>% 
+  select(-Order,-Order2,-Dry_Weight_g,-Date,-Notes) %>% 
   mutate(Treatment_Plot=paste(Dataset,Grazing_Treatment,Block,Plot,sep = "_"))
 
 #remove blank rows in dataframe
@@ -257,6 +255,29 @@ cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00"
 custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA", 
                 "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
 
+# Developmental version
+#devtools::install_github("riatelab/cartography")
+# CRAN version
+#install.packages("cartography")
+library(cartography)
+display.carto.all()
+pastel<-carto.pal(pal1="pastel.pal",n1=8)
+pastel1<-carto.pal(pal1="pastel.pal",n1=12)
+
+# CRAN version
+#install.packages("nord")
+library(nord)
+prairie<-nord(palette="afternoon_prarie")
+
+#install.packages("RColorBrewer")
+library(RColorBrewer)
+display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
+                   colorblindFriendly=TRUE)
+Set2<-brewer.pal(8, "Set2")
+Paired<-brewer.pal(8, "Paired")
+Dark2<-brewer.pal(8, "Dark2")
+
+
 #### Graph of Weights from Sweep Net by Grazing treatment ####
 ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
@@ -266,23 +287,24 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+  scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.82))+
   #Make the y-axis extend to 50
-  expand_limits(y=6)
+  expand_limits(y=6)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))   
 #Save at the graph at 1400x1500
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
 ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",color="black")+
+  geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
+  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
@@ -299,7 +321,7 @@ ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
+  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
@@ -315,7 +337,7 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=custom.col, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
+  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
@@ -327,9 +349,8 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
 Weight_Orthoptera_S<-Weight_Data %>% 
   filter(Correct_Order=="Orthoptera") %>% 
   filter(Dataset=="S") %>% 
-  select(-Date,-Notes) %>% 
   left_join(ID_Data_Correct) %>% 
-  filter(Correct_Family=="Acrididae") %>% 
+  filter(Correct_Family=="Acrididae") %>%
   na.omit(Correct_Genus)
 
 #make dataframe with sum of each genus of orthoptera summed by plot
@@ -339,7 +360,7 @@ Weight_Orthoptera_S_Summed <- Weight_Orthoptera_S %>%
   ungroup()
 
 #make table a graph looking at differences in genus weight by grazing treatment
-Weight_Orthoptera_Avg<-Weight_Orthoptera_S_Summed %>% 
+Weight_Orthoptera_Avg_S<-Weight_Orthoptera_S_Summed %>% 
   group_by(Grazing_Treatment,Correct_Genus) %>% 
   summarise(Average_Weight=mean(Genus_Weight),Weight_SD=sd(Genus_Weight),Weight_n=length(Genus_Weight)) %>% 
   #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
@@ -373,8 +394,8 @@ summary(Orthoptera_Genera_GLMM)
 anova(Orthoptera_Genera_GLMM)
   
 #graph diference in genus weight by grazing treatment
-#### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
-ggplot(Weight_Orthoptera_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
+#### Graph of Weights from D-vac by Grazing treatment - rthoptera ####
+ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity",position = "stack")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -382,13 +403,13 @@ ggplot(Weight_Orthoptera_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Corr
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia","Melanoplus","Opeia","Phoetaliotes"))+
+  scale_fill_manual(values=pastel, labels=c(expression(italic("Ageneotettix")),expression(italic("Amphiturnus")),expression(italic("Arphia")),expression(italic("Melanoplus")),expression(italic("Opeia")),expression(italic("Phoetaliotes"))))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.84,0.84))+
   #Make the y-axis extend to 50
-  expand_limits(y=6)
-#Save at the graph at 1400x1500
+  expand_limits(y=6)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45)) 
+#Save at the graph at 1500x1500
 
 
 #### Changes in Orthoptera genra by grazing treatment - D-Vac####
@@ -396,7 +417,6 @@ ggplot(Weight_Orthoptera_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Corr
 Weight_Orthoptera_D<-Weight_Data %>% 
   filter(Correct_Order=="Orthoptera") %>% 
   filter(Dataset=="D") %>% 
-  select(-Date,-Notes) %>% 
   left_join(ID_Data_Correct) %>% 
   filter(Correct_Family=="Acrididae") %>% 
   na.omit(Correct_Genus)
@@ -452,7 +472,7 @@ ggplot(Weight_Orthoptera_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_fill_manual(values=custom.col, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"))+
+  scale_fill_manual(values=Set2, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
   #Make the y-axis extend to 50
@@ -511,13 +531,16 @@ ggplot(Plot_Weight_S_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
+  ylab("Average Plot Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  scale_x_discrete(labels=c("2"="High Grazing","1"="Low Grazing","0"="No Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
+  theme(legend.position="none")+
+  annotate("text",x=1.27,y=8,label="a.Sweep Net Samples",size=20)+
   #Make the y-axis extend to 50
-  expand_limits(y=8)
-#Save at the graph at 1400x1500
+  expand_limits(y=8)+
+  theme(text = element_text(size = 45))  
+#Save at the graph at 1500x1500
 
 #### Differences in total plot arthropod weight by grazing treatment - D-Vac ####
 
@@ -576,8 +599,85 @@ ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   ylab("Average Plot Weight (g)")+
   geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
+  theme(legend.position="none")+
+  annotate("text",x=1.2,y=0.4,label="b.Vacuum Samples",size=20)+
   #Make the y-axis extend to 50
-  expand_limits(y=0.5)
-#Save at the graph at 1400x1500
+  expand_limits(y=0.4)+
+  theme(text = element_text(size = 45))   
+#Save at the graph at 1500x1500
+
+
+#### Creating NMDS ####
+
+### did with d-vac data because the NMDS needed more data than the sweep net
+#Make a new data frame called Wide_Relative_Cover using data from Relative_Cover
+Wide_Order_Weight<-Weight_Data_Summed%>%
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Plot!="NA") %>% 
+  #Make a wide table using column correct order as overarching columns, fill with values from correct dry weight column, if there is no value for one cell, insert a zero
+  spread(key=Correct_Order,value=Correct_Dry_Weight_g, fill=0) %>% 
+  filter(Dataset=="D")
+
+#Make new data frame called BC_Data and run an NMDS 
+BC_Data <- metaMDS(Wide_Order_Weight[,5:12])
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
+sites <- 1:nrow(Wide_Order_Weight)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data <- Wide_Order_Weight[,1:4]
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data$points,col=as.factor(BC_Meta_Data$Grazing_Treatment))
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses and display by sites, add labels based on Watershed type.
+ordiellipse(BC_Data,groups = as.factor(BC_Meta_Data$Grazing_Treatment),kind = "sd",display = "sites", label = T)
+
+#Use the vegan ellipse function to make ellipses           
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS = data.frame(MDS1 = BC_Data$points[,1], MDS2 = BC_Data$points[,2],group=BC_Meta_Data$Grazing_Treatment)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph <- cbind(BC_Meta_Data,BC_NMDS)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses<-ordiellipse(BC_Data, BC_Meta_Data$Grazing_Treatment, display = "sites",
+                             kind = "se", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS$group)){
+  BC_Ellipses <- rbind(BC_Ellipses, cbind(as.data.frame(with(BC_NMDS[BC_NMDS$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses[[g]]$cov,BC_Ord_Ellipses[[g]]$center,BC_Ord_Ellipses[[g]]$scale)))
+                                          ,group=g))
+}
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=6) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses, aes(x=NMDS1, y=NMDS2), size=3)+
+  #remove lintype legend
+  guides(linetype= FALSE)+
+  #Use different shapes according to Watershed types
+  scale_shape_discrete(name="Grazing Treatment", labels = c("No Grazing", "Low Grazing", "High Grazing"))+
+  scale_color_manual(values=c("thistle2","thistle3","thistle4"),labels = c("No Grazing", "Low Grazing", "High Grazing"),name="Grazing Treatment")+
+  #make the text size of the legend titles 28
+  theme(legend.title = element_text(size=28),  legend.key.size = unit(2.0, 'lines'),legend.text=element_text(size=28),legend.position=c(0.21,0.89))+
+  #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
+  #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.30,y=-0.19,label="High Grazing",size=10, fontface="bold")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 45))
+#export at 1000x1000
+
+
+scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
   
