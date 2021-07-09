@@ -19,13 +19,13 @@ library(nationalparkcolors)
 
 #### Load in data ####
 Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
-  rename(Grazing_Treatment=ï..Grazing_Treatment)
+rename(Grazing_Treatment=ï..Grazing_Treatment)
 Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) #%>% 
-  rename(Grazing_Treatment=ï..Grazing_Treatment)
+rename(Grazing_Treatment=ï..Grazing_Treatment)
 D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) #%>% 
-  rename(Grazing_Treatment=ï..Grazing_Treatment)
+rename(Grazing_Treatment=ï..Grazing_Treatment)
 D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>% 
-  rename(Grazing_Treatment=ï..Grazing_Treatment)
+rename(Grazing_Treatment=ï..Grazing_Treatment)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -193,7 +193,10 @@ anova(Weight_Data_S_Order_GLMM)
 
 ### D-vac data
 Weight_Data_Summed_D<-Weight_Data_Summed %>% 
-  filter(Dataset=="D")
+  filter(Dataset=="D") %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="Snail") 
 
 #### Anova comparing insect weights by grazing treatment for d-vac #### 
 #Weight_Data_D_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_D) 
@@ -256,7 +259,6 @@ custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA",
                 "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
 
 # Developmental version
-<<<<<<< HEAD
 #devtools::install_github("riatelab/cartography")
 # CRAN version
 #install.packages("cartography")
@@ -271,21 +273,6 @@ library(nord)
 prairie<-nord(palette="afternoon_prarie")
 
 #install.packages("RColorBrewer")
-=======
-devtools::install_github("riatelab/cartography")
-# CRAN version
-install.packages("cartography")
-library(cartography)
-display.carto.all()
-pastel<-carto.pal(pal1="pastel.pal",n1=8)
-
-# CRAN version
-install.packages("nord")
-library(nord)
-prairie<-nord(palette="afternoon_prarie")
-
-install.packages("RColorBrewer")
->>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
 library(RColorBrewer)
 display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
                    colorblindFriendly=TRUE)
@@ -303,20 +290,12 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-<<<<<<< HEAD
   scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
-=======
-  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
->>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.82))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
-<<<<<<< HEAD
   theme(text = element_text(size = 45),legend.text=element_text(size=45))   
-=======
-  theme(text = element_text(size = 45))   
->>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
 #Save at the graph at 1400x1500
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
@@ -416,7 +395,7 @@ plot(Orthoptera_Genera_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,l
 Orthoptera_Genera_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + (1 | Block) , data = Weight_Orthoptera_S_Summed)
 summary(Orthoptera_Genera_GLMM)
 anova(Orthoptera_Genera_GLMM)
-  
+
 #graph diference in genus weight by grazing treatment
 #### Graph of Weights from D-vac by Grazing treatment - rthoptera ####
 ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
@@ -630,7 +609,6 @@ ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   expand_limits(y=0.4)+
   theme(text = element_text(size = 45))   
 #Save at the graph at 1500x1500
-<<<<<<< HEAD
 
 
 #### Creating NMDS ####
@@ -703,8 +681,45 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   theme(text = element_text(size = 45))
 #export at 1000x1000
 
+##PerMANOVA
 
-scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
-=======
->>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
-  
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix <- Wide_Order_Weight[,5:ncol(Wide_Order_Weight)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix <- Wide_Order_Weight[,1:4]
+
+Environment_Matrix$Dataset_Fact=as.factor(Environment_Matrix$Dataset)
+Environment_Matrix$Grazing_Treatment_Fact=as.factor(Environment_Matrix$Grazing_Treatment)
+Environment_Matrix$Block_Fact=as.factor(Environment_Matrix$Block)
+Environment_Matrix$Plot_Fact=as.factor(Environment_Matrix$Plot)
+Environment_Matrix$Grazing_Block=interaction(Environment_Matrix$Grazing_Treatment_Fact:Environment_Matrix$Block_Fact)
+Environment_Matrix$Grazing_Block_Plot=interaction(Environment_Matrix$Grazing_Block:Environment_Matrix$Plot_Fact)
+
+
+#Make a new dataframe with data from Relative_Cover
+Weight_Data_Summed2 <- Weight_Data_Summed%>%
+  filter(Dataset=="D") %>% 
+  select(-Dataset)
+
+
+#Make a new dataframe with data from Relative_Cover2
+Wide_Order_Weight2 <- Weight_Data_Summed2%>%
+  #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
+  spread(key = Correct_Order, value = Correct_Dry_Weight_g, fill = 0)
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2 <- adonis2(formula = Species_Matrix~Grazing_Treatment_Fact+Grazing_Treatment_Fact*Block_Fact, data=Environment_Matrix,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2)  
+
+##PermDisp -- not sure if i should run this since PerMANOVA was not significant 
+
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix <- vegdist(Species_Matrix)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Grazing_Treatment)
+permutest(Dispersion_Results_Grazing,pairwise = T, permutations = 999)
+#Run a dissimilarity matrix (PermDisp) comparing block
+Dispersion_Results_Block <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Block)
+permutest(Dispersion_Results_Block,pairwise = T, permutations = 999)
+
