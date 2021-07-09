@@ -256,6 +256,7 @@ custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA",
                 "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
 
 # Developmental version
+<<<<<<< HEAD
 #devtools::install_github("riatelab/cartography")
 # CRAN version
 #install.packages("cartography")
@@ -270,6 +271,21 @@ library(nord)
 prairie<-nord(palette="afternoon_prarie")
 
 #install.packages("RColorBrewer")
+=======
+devtools::install_github("riatelab/cartography")
+# CRAN version
+install.packages("cartography")
+library(cartography)
+display.carto.all()
+pastel<-carto.pal(pal1="pastel.pal",n1=8)
+
+# CRAN version
+install.packages("nord")
+library(nord)
+prairie<-nord(palette="afternoon_prarie")
+
+install.packages("RColorBrewer")
+>>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
 library(RColorBrewer)
 display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
                    colorblindFriendly=TRUE)
@@ -287,12 +303,20 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
+<<<<<<< HEAD
   scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+=======
+  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+>>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.82))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
+<<<<<<< HEAD
   theme(text = element_text(size = 45),legend.text=element_text(size=45))   
+=======
+  theme(text = element_text(size = 45))   
+>>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
 #Save at the graph at 1400x1500
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
@@ -606,6 +630,7 @@ ggplot(Plot_Weight_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, position = "d
   expand_limits(y=0.4)+
   theme(text = element_text(size = 45))   
 #Save at the graph at 1500x1500
+<<<<<<< HEAD
 
 
 #### Creating NMDS ####
@@ -680,4 +705,6 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
 
 
 scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("No Grazing","Low Grazing","High Grazing"))+
+=======
+>>>>>>> 77077b20aa5110a4c99c63e17cdfb863acaad5f2
   
