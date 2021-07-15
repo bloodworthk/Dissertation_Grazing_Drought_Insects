@@ -31,7 +31,7 @@ rename(Grazing_Treatment=ï..Grazing_Treatment)
 theme_set(theme_bw())
 #Update ggplot2 theme - make box around the x-axis title size 30, vertically justify x-axis title to 0.35, Place a margin of 15 around the x-axis title.  Make the x-axis title size 30. For y-axis title, make the box size 30, put the writing at a 90 degree angle, and vertically justify the title to 0.5.  Add a margin of 15 and make the y-axis text size 25. Make the plot title size 30 and vertically justify it to 2.  Do not add any grid lines.  Do not add a legend title, and make the legend size 20
 theme_update(panel.grid.major=element_blank(),
-             panel.grid.minor=element_blank(), legend.title=element_blank())
+             panel.grid.minor=element_blank())
 
 
 #### Formatting Data ####
@@ -365,7 +365,7 @@ Set2<-brewer.pal(8, "Set2")
 Paired<-brewer.pal(8, "Paired")
 Dark2<-brewer.pal(8, "Dark2")
 
-####Figure 2 poster ####
+####Figure 3a poster ####
 #### Graph of Weights from Sweep Net by Grazing treatment #### 
 ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
@@ -375,9 +375,9 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"))+
+  scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Arthropod Order")+
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.82))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.78))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   theme(text = element_text(size = 45),legend.text=element_text(size=45))   
