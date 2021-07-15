@@ -191,6 +191,57 @@ summary(Weight_Data_S_Order_GLMM)
 anova(Weight_Data_S_Order_GLMM)
 
 
+#### poster table 1 ####
+### Glmm for sweep net - separating out orders and testing individually across grazing treatments 
+
+#Create a new dataframe with just one order in each dataframe 
+
+#Araneae
+Weight_Data_S_Araneae_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Araneae"))
+summary(Weight_Data_S_Araneae_GLMM)
+anova(Weight_Data_S_Araneae_GLMM)
+
+#Coleoptera
+Weight_Data_S_Coleoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Coleoptera"))
+summary(Weight_Data_S_Coleoptera_GLMM)
+anova(Weight_Data_S_Coleoptera_GLMM)
+
+#Coleoptera
+Weight_Data_S_Coleoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Coleoptera"))
+summary(Weight_Data_S_Coleoptera_GLMM)
+anova(Weight_Data_S_Coleoptera_GLMM)
+
+#Diptera
+Weight_Data_S_Diptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Diptera"))
+summary(Weight_Data_S_Diptera_GLMM)
+anova(Weight_Data_S_Diptera_GLMM)
+
+#Hemiptera
+Weight_Data_S_Hemiptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Hemiptera"))
+summary(Weight_Data_S_Hemiptera_GLMM)
+anova(Weight_Data_S_Hemiptera_GLMM)
+
+#Hymenoptera
+Weight_Data_S_Hymenoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Hymenoptera"))
+summary(Weight_Data_S_Hymenoptera_GLMM)
+anova(Weight_Data_S_Hymenoptera_GLMM)
+
+#Lygaeidae - not enough data
+#Weight_Data_S_Lygaeidae_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Lygaeidae"))
+#summary(Weight_Data_S_Lygaeidae_GLMM)
+#anova(Weight_Data_S_Lygaeidae_GLMM)
+
+#Neuroptera- not enough data
+#Weight_Data_S_Neuroptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Neuroptera"))
+#summary(Weight_Data_S_Neuroptera_GLMM)
+#anova(Weight_Data_S_Neuroptera_GLMM)
+
+#Orthoptera
+Weight_Data_S_Orthoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_S,Correct_Order=="Orthoptera"))
+summary(Weight_Data_S_Orthoptera_GLMM)
+anova(Weight_Data_S_Orthoptera_GLMM)
+
+
 ### D-vac data
 Weight_Data_Summed_D<-Weight_Data_Summed %>% 
   filter(Dataset=="D") %>% 
@@ -236,6 +287,40 @@ summary(Weight_Data_D_Order_GLMM_Model)
 emmeans(Weight_Data_D_Order_GLMM_Model, adjust = "tukey")
 TukeyHSD(Weight_Data_D_Order_GLMM_Model)
 
+### Glmm for dvac - separating out orders and testing individually across grazing treatments
+
+#Create a new dataframe with just one order in each dataframe 
+
+#Araneae
+Weight_Data_D_Araneae_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Araneae"))
+summary(Weight_Data_D_Araneae_GLMM)
+anova(Weight_Data_D_Araneae_GLMM)
+
+#Coleoptera
+Weight_Data_D_Coleoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Coleoptera"))
+summary(Weight_Data_D_Coleoptera_GLMM)
+anova(Weight_Data_D_Coleoptera_GLMM)
+
+#Diptera
+Weight_Data_D_Diptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Diptera"))
+summary(Weight_Data_D_Diptera_GLMM)
+anova(Weight_Data_D_Diptera_GLMM)
+
+#Hemiptera
+Weight_Data_D_Hemiptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Hemiptera"))
+summary(Weight_Data_D_Hemiptera_GLMM)
+anova(Weight_Data_D_Hemiptera_GLMM)
+
+#Hymenoptera
+Weight_Data_D_Hymenoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Hymenoptera"))
+summary(Weight_Data_D_Hymenoptera_GLMM)
+anova(Weight_Data_D_Hymenoptera_GLMM)
+
+#Orthoptera
+Weight_Data_D_Orthoptera_GLMM <- lmer(Correct_Dry_Weight_g ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_D,Correct_Order=="Orthoptera"))
+summary(Weight_Data_D_Orthoptera_GLMM)
+anova(Weight_Data_D_Orthoptera_GLMM)
+
 
 ### Average by order across Grazing treatment ####
 Weight_by_Grazing<-Weight_Data_Summed %>% 
@@ -280,8 +365,8 @@ Set2<-brewer.pal(8, "Set2")
 Paired<-brewer.pal(8, "Paired")
 Dark2<-brewer.pal(8, "Dark2")
 
-
-#### Graph of Weights from Sweep Net by Grazing treatment ####
+####Figure 2 poster ####
+#### Graph of Weights from Sweep Net by Grazing treatment #### 
 ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity")+
@@ -376,6 +461,39 @@ Orthoptera_Genera_AOV <- aov(Genus_Weight ~ Grazing_Treatment*Correct_Genus, dat
 summary(Orthoptera_Genera_AOV)
 model.tables(Orthoptera_Genera_AOV)
 
+#### Table information for poster ####
+#Create a new models with just one genera in each dataframe 
+
+#Arphia
+Weight_Data_S_Arphia_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Arphia"))
+summary(Weight_Data_S_Arphia_GLMM)
+anova(Weight_Data_S_Arphia_GLMM)
+
+#Melanoplus
+Weight_Data_S_Melanoplus_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Melanoplus"))
+summary(Weight_Data_S_Melanoplus_GLMM)
+anova(Weight_Data_S_Melanoplus_GLMM)
+
+#Opeia
+Weight_Data_S_Opeia_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Opeia"))
+summary(Weight_Data_S_Opeia_GLMM)
+anova(Weight_Data_S_Opeia_GLMM)
+
+#Phoetaliotes
+Weight_Data_S_Phoetaliotes_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Phoetaliotes"))
+summary(Weight_Data_S_Phoetaliotes_GLMM)
+anova(Weight_Data_S_Phoetaliotes_GLMM)
+
+#Ageneotettix
+Weight_Data_S_Ageneotettix_GLMM <- lmer(Genus_Weight~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Ageneotettix"))
+summary(Weight_Data_S_Ageneotettix_GLMM)
+anova(Weight_Data_S_Ageneotettix_GLMM)
+
+#Amphiturnus - not enough data
+#Weight_Data_S_Amphiturnus_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Amphiturnus"))
+#summary(Weight_Data_S_Amphiturnus_GLMM)
+#anova(Weight_Data_S_Amphiturnus_GLMM)
+
 #Create a 4-panel plot that contains the following in this order (clockwise from upper left)
 
 plot2<-par(mfrow=c(2,2))
@@ -396,6 +514,7 @@ Orthoptera_Genera_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + 
 summary(Orthoptera_Genera_GLMM)
 anova(Orthoptera_Genera_GLMM)
 
+#### Figure 3 poster ####
 #graph diference in genus weight by grazing treatment
 #### Graph of Weights from D-vac by Grazing treatment - rthoptera ####
 ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
