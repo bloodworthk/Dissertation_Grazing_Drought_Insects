@@ -334,32 +334,16 @@ Weight_by_Grazing_D<-Weight_by_Grazing %>%
   filter(Dataset=="D")
 
 #Color Palette
-cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#999999")
+#Colors by order:
+#Araneae - "#661100"
+#Coleoptera -"#CC6677"
+#Diptera - "#DDCC77"
+#Hemiptera - "#117733"
+#Hymenoptera - "#332288"
+#Lygaeidae - "#44AA99"
+#Neuroptera - "#AA4499"
+#Orthoptera - "#6699CC"
 
-custom.col <- c("#FFDB6D", "#C4961A", "#F4EDCA", 
-                "#D16103", "#C3D7A4", "#52854C", "#4E84C4", "#293352")
-
-# Developmental version
-#devtools::install_github("riatelab/cartography")
-# CRAN version
-#install.packages("cartography")
-library(cartography)
-display.carto.all()
-pastel<-carto.pal(pal1="pastel.pal",n1=8)
-pastel1<-carto.pal(pal1="pastel.pal",n1=12)
-
-# CRAN version
-#install.packages("nord")
-library(nord)
-prairie<-nord(palette="afternoon_prarie")
-
-#install.packages("RColorBrewer")
-library(RColorBrewer)
-display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
-                   colorblindFriendly=TRUE)
-Set2<-brewer.pal(8, "Set2")
-Paired<-brewer.pal(8, "Paired")
-Dark2<-brewer.pal(8, "Dark2")
 
 ####Figure 3a poster ####
 #### Graph of Weights from Sweep Net by Grazing treatment #### 
@@ -372,14 +356,14 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=pastel1, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "a. Arthropod Order")+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Arthropod Order")+
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.20,0.78))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.83,0.78))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
-  #annotate("text",x=1.27,y=8,label="a.Arthropod Order",size=20)+
-  theme(text = element_text(size = 45),legend.text=element_text(size=45))
-#Save at the graph at 1400x1500
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)
+#Save at the graph at 1400x1400
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
 ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
@@ -390,44 +374,50 @@ ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.2)
-#Save at the graph at 1400x1500
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
+  #Make the y-axis extend
+  expand_limits(y=0.2)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  geom_text(x=2, y=0.2, label="b. 2020 Sweep Net without Orthoptera",size=20)
+#Save at the graph at 1500x1400
 
 
 #### Graph of Weights from D-vac by Grazing treatment ####
 ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",color="black")+
+  geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.3)
-#Save at the graph at 1400x1500
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
+  #Make the y-axis extend
+  expand_limits(y=0.3)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  geom_text(x=1.1, y=0.3, label="c. 2020 D-Vac",size=20)
+#Save at the graph at 1400x1400
 
 #### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
 ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",color="black")+
+  geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  scale_fill_manual(values=Set2, labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera"))+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.020)
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
+  #Make the y-axis extend
+  expand_limits(y=0.020)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  geom_text(x=1.9, y=0.02, label="d. 2020 D-Vac without Orthoptera",size=20)
 #Save at the graph at 1400x1500
 
 #### Changes in Orthoptera genra by grazing treatment - Sweep net####
@@ -514,7 +504,7 @@ anova(Orthoptera_Genera_GLMM)
 
 #### Figure 3b poster ####
 #graph diference in genus weight by grazing treatment
-#### Graph of Weights from D-vac by Grazing treatment - rthoptera ####
+#### Graph of Weights from Sweep Net by Grazing treatment - Orthoptera ####
 ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity",position = "stack")+
@@ -584,22 +574,25 @@ summary(Orthoptera_Genera_D_GLMM)
 anova(Orthoptera_Genera_D_GLMM)
 
 #graph diference in genus weight by grazing treatment
-#### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
-ggplot(Weight_Orthoptera_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "dodge"))+
+#### Graph of Weights from D-vac by Grazing treatment
+ggplot(Weight_Orthoptera_D_Avg,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position = "stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",position = "dodge")+
+  geom_bar(stat="identity",position = "stack")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
-  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(0.9),width=0.2)+
-  scale_fill_manual(values=Set2, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"))+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=pastel, labels=c("Ageneotettix","Amphiturnus","Arphia", "Eritettix","Melanoplus","Opeia","Phoetaliotes"), name = "Orthoptera Genera")+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=4), legend.key.size = unit(1,"centimeters"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.22,0.7))+
   #Make the y-axis extend to 50
-  expand_limits(y=0.4)
-#Save at the graph at 1400x1500
+  expand_limits(y=0.4)+
+  theme(legend.text.align = 0)+
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  geom_text(x=1.1, y=0.4, label="d. 2020 D-Vac",size=20)
+#Save at the graph at 1400x1400
 
 #### Differences in total plot arthropod weight by grazing treatment - SweepNet ####
 
@@ -791,7 +784,7 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   scale_shape_discrete(name="Grazing Treatment", labels = c("No Grazing", "Low Grazing", "High Grazing"))+
   scale_color_manual(values=c("thistle2","thistle3","thistle4"),labels = c("No Grazing", "Low Grazing", "High Grazing"),name="Grazing Treatment")+
   #make the text size of the legend titles 28
-  theme(legend.title = element_text(size=28),  legend.key.size = unit(2.0, 'lines'),legend.text=element_text(size=28),legend.position=c(0.21,0.89))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.21,0.8))+
   #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
   #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
   #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
@@ -799,8 +792,10 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   #Label the x-axis "NMDS1" and the y-axis "NMDS2"
   xlab("NMDS1")+
   ylab("NMDS2")+
-  theme(text = element_text(size = 45))
-#export at 1000x1000
+  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  annotate(geom="text", x=-0.7, y=0.8, label="b. 2020 D-Vac Net",size=20)
+#export at 1400x1400
+
 
 ##PerMANOVA
 
@@ -843,4 +838,3 @@ permutest(Dispersion_Results_Grazing,pairwise = T, permutations = 999)
 #Run a dissimilarity matrix (PermDisp) comparing block
 Dispersion_Results_Block <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Block)
 permutest(Dispersion_Results_Block,pairwise = T, permutations = 999)
-
