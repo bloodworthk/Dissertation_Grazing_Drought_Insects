@@ -344,8 +344,8 @@ Weight_by_Grazing_D<-Weight_by_Grazing %>%
 #Neuroptera - "#AA4499"
 #Orthoptera - "#6699CC"
 
-
-####Figure 3a poster ####
+#### Proposal ####
+##Figure 3a poster ##
 #### Graph of Weights from Sweep Net by Grazing treatment #### 
 ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
@@ -364,6 +364,7 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   theme(text = element_text(size = 45),legend.text=element_text(size=45))+
   geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)
 #Save at the graph at 1400x1400
+
 
 #### Graph of Weights from Sweep Net by Grazing treatment - NO GRASSHOPPERS ####
 ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
@@ -420,6 +421,8 @@ ggplot(subset(Weight_by_Grazing_D,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   geom_text(x=1.9, y=0.02, label="d. 2020 D-Vac without Orthoptera",size=20)
 #Save at the graph at 1400x1500
 
+
+
 #### Changes in Orthoptera genra by grazing treatment - Sweep net####
 ## check datasheets for why there are NAs in following dataframe - don't see NAs now
 Weight_Orthoptera_S<-Weight_Data %>% 
@@ -443,64 +446,89 @@ Weight_Orthoptera_Avg_S<-Weight_Orthoptera_S_Summed %>%
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
   ungroup()
 
-####assess differences in orthoptera Genera by grazing treatment using ANOVA####
-#### Anova comparing insect weights by grazing treatment for d-vac #### 
-Orthoptera_Genera_AOV <- aov(Genus_Weight ~ Grazing_Treatment*Correct_Genus, data = Weight_Orthoptera_S_Summed) 
-summary(Orthoptera_Genera_AOV)
-model.tables(Orthoptera_Genera_AOV)
+#### total weight as a function of treatment with block as a random effect ####
+#D-vac  - all
+Family_AOV_DVac <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D"))
+summary(Family_AOV_DVac)
 
-#### Table information for poster ####
-#Create a new models with just one genera in each dataframe 
-
-#Arphia
-Weight_Data_S_Arphia_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Arphia"))
-summary(Weight_Data_S_Arphia_GLMM)
-anova(Weight_Data_S_Arphia_GLMM)
-
-#Melanoplus
-Weight_Data_S_Melanoplus_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Melanoplus"))
-summary(Weight_Data_S_Melanoplus_GLMM)
-anova(Weight_Data_S_Melanoplus_GLMM)
-
-#Opeia
-Weight_Data_S_Opeia_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Opeia"))
-summary(Weight_Data_S_Opeia_GLMM)
-anova(Weight_Data_S_Opeia_GLMM)
-
-#Phoetaliotes
-Weight_Data_S_Phoetaliotes_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Phoetaliotes"))
-summary(Weight_Data_S_Phoetaliotes_GLMM)
-anova(Weight_Data_S_Phoetaliotes_GLMM)
-
-#Ageneotettix
-Weight_Data_S_Ageneotettix_GLMM <- lmer(Genus_Weight~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Ageneotettix"))
-summary(Weight_Data_S_Ageneotettix_GLMM)
-anova(Weight_Data_S_Ageneotettix_GLMM)
-
-#Amphiturnus - not enough data
-#Weight_Data_S_Amphiturnus_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_S_Summed,Correct_Genus=="Amphiturnus"))
-#summary(Weight_Data_S_Amphiturnus_GLMM)
-#anova(Weight_Data_S_Amphiturnus_GLMM)
-
-#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
-
-plot2<-par(mfrow=c(2,2))
+#Sweep_Net  - all
+Family_AOV_SweepNet <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S"))
+summary(Family_AOV_SweepNet)
 
 
-## b. scatterplot of the residuals vs. fitted values    for the model
-plot(Orthoptera_Genera_AOV$residuals ~ Orthoptera_Genera_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
-abline(h = 0, lty = 3)
+#### total weight by family ####
 
-## c. histogram of the residuals
-hist(Orthoptera_Genera_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+#D-vac - orthoptera
+AOV_DVac_Orthoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Orthoptera"))
+summary(AOV_DVac_Orthoptera)
 
-## d. Q-Q plot
-plot(Orthoptera_Genera_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+#D-vac - Hemiptera
+AOV_DVac_Hemiptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Hemiptera"))
+summary(AOV_DVac_Hemiptera)
 
-#### Glmm for Orthoptera Weights by Genera####
-Orthoptera_Genera_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + (1 | Block) , data = Weight_Orthoptera_S_Summed)
-summary(Orthoptera_Genera_GLMM)
-anova(Orthoptera_Genera_GLMM)
+#D-vac - Coleoptera
+AOV_DVac_Coleoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Coleoptera"))
+summary(AOV_DVac_Coleoptera)
+
+#D-vac - Hymenoptera
+AOV_DVac_Hymenoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Hymenoptera"))
+summary(AOV_DVac_Hymenoptera)
+
+#D-vac - Araneae
+AOV_DVac_Araneae <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Araneae"))
+summary(AOV_DVac_Araneae)
+
+#D-vac - Diptera
+AOV_DVac_Diptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="D" & Correct_Order=="Diptera"))
+summary(AOV_DVac_Diptera)
+
+#SweepNet - Orthoptera
+AOV_SweepNet_Orthoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Orthoptera"))
+summary(AOV_SweepNet_Orthoptera)
+
+#SweepNet - Hemiptera
+AOV_SweepNet_Hemiptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Hemiptera"))
+summary(AOV_SweepNet_Hemiptera)
+
+#SweepNet - Coleoptera
+AOV_SweepNet_Coleoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Coleoptera"))
+summary(AOV_SweepNet_Coleoptera)
+
+#SweepNet - Hymenoptera
+AOV_SweepNet_Hymenoptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Hymenoptera"))
+summary(AOV_SweepNet_Hymenoptera)
+
+#SweepNet - Araneae
+AOV_SweepNet_Araneae <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Araneae"))
+summary(AOV_SweepNet_Araneae)
+
+#SweepNet - Diptera
+AOV_SweepNet_Diptera <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Data,Dataset=="S" & Correct_Order=="Diptera"))
+summary(AOV_SweepNet_Diptera)
+
+
+#### Orthoptera Order by Genera - Sweep Net ####
+
+#sweepnet - Phoetaliotes
+AOV_SweepNet_Phoetaliotes <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Phoetaliotes"))
+summary(AOV_SweepNet_Phoetaliotes)
+
+#SweepNet - Melanoplus
+AOV_SweepNet_Melanoplus <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Melanoplus"))
+summary(AOV_SweepNet_Melanoplus)
+
+#SweepNet - Ageneotettix
+AOV_SweepNet_Ageneotettix <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Ageneotettix"))
+summary(AOV_SweepNet_Ageneotettix)
+
+#SweepNet - Arphia
+AOV_SweepNet_Arphia <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Arphia"))
+summary(AOV_SweepNet_Arphia)
+
+#SweepNet - Opeia
+AOV_SweepNet_Opeia <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Opeia"))
+summary(AOV_SweepNet_Opeia)
+
 
 #### Figure 3b poster ####
 #graph diference in genus weight by grazing treatment
@@ -547,31 +575,31 @@ Weight_Orthoptera_D_Avg<-Weight_Orthoptera_D_Summed %>%
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
   ungroup()
 
-####assess differences in orthoptera Genera by grazing treatment using ANOVA - D-vac####
-#### Anova comparing insect weights by grazing treatment for d-vac #### 
-Orthoptera_Genera_D_AOV <- aov(Genus_Weight ~ Grazing_Treatment*Correct_Genus, data = Weight_Orthoptera_D_Summed) 
-summary(Orthoptera_Genera_D_AOV)
-model.tables(Orthoptera_Genera_D_AOV)
+#### Orthoptera Order by Genera - DVac ####
 
-#Create a 4-panel plot that contains the following in this order (clockwise from upper left)
+#dvac - Phoetaliotes
+AOV_DVac_Phoetaliotes <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Phoetaliotes"))
+summary(AOV_DVac_Phoetaliotes)
 
-plot2<-par(mfrow=c(2,2))
+#dvac - Melanoplus
+AOV_DVac_Melanoplus <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Melanoplus"))
+summary(AOV_DVac_Melanoplus)
 
+#dvac - Ageneotettix
+AOV_DVac_Ageneotettix <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Ageneotettix"))
+summary(AOV_DVac_Ageneotettix)
 
-## b. scatterplot of the residuals vs. fitted values    for the model
-plot(Orthoptera_Genera_D_AOV$residuals ~ Orthoptera_Genera_D_AOV$fitted.values, col = 'dark orange',main="",ylab="AOV Residuals",xlab="AOV Fitted Values",cex.lab=1.5,lwd = 2,cex.axis=1.5)
-abline(h = 0, lty = 3)
+#dvac - Eritettix
+AOV_DVac_Eritettix <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Eritettix"))
+summary(AOV_DVac_Eritettix)
 
-## c. histogram of the residuals
-hist(Orthoptera_Genera_D_AOV$residuals, col = 'white', border = 'dark orange',main="",ylab="Frequency",xlab="AOV Residuals",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
+#dvac - Arphia
+AOV_DVac_Arphia <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Arphia"))
+summary(AOV_DVac_Arphia)
 
-## d. Q-Q plot
-plot(Orthoptera_Genera_D_AOV, which = 2, col = 'dark orange',main="",cex.lab=1.5,lwd = 2,cex.axis=1.5) 
-
-#### Glmm for Orthoptera Weights by Genera####
-Orthoptera_Genera_D_GLMM <- lmer(Genus_Weight ~ Grazing_Treatment*Correct_Genus + (1 | Block) , data = Weight_Orthoptera_D_Summed)
-summary(Orthoptera_Genera_D_GLMM)
-anova(Orthoptera_Genera_D_GLMM)
+#dvac - Opeia
+AOV_DVac_Opeia <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Opeia"))
+summary(AOV_DVac_Opeia)
 
 #graph diference in genus weight by grazing treatment
 #### Graph of Weights from D-vac by Grazing treatment
@@ -613,7 +641,7 @@ Plot_Weight_S_Avg<-Plot_Weight_S %>%
 
 ####assess differences in plot weight by grazing treatment using ANOVA - SweepNet####
 #### Anova comparing insect weights by grazing treatment for sweepnet #### 
-Plot_Weight_S_AOV <- aov(Plot_Weight ~ Grazing_Treatment, data = Plot_Weight_S) 
+Plot_Weight_S_AOV <- aov(Plot_Weight ~ Grazing_Treatment, (1| Block), data = Plot_Weight_S) 
 summary(Plot_Weight_S_AOV)
 model.tables(Plot_Weight_S_AOV)
 
