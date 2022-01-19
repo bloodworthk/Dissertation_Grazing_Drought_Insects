@@ -13,6 +13,8 @@ setwd("/Users/kjbloodw/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_D
 
 #Load Tidyverse#
 library(tidyverse)
+#install.packages("scales")
+library(scales)
 library(vegan)
 library(lmerTest)
 library(nationalparkcolors)
@@ -356,11 +358,12 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Arthropod Order")+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Order")+
   scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.83,0.79))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
   theme(text = element_text(size = 45),legend.text=element_text(size=45))+
   geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)+
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
@@ -556,12 +559,14 @@ ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_brewer(palette = "Set3",labels=c(expression(italic("Ageneotettix")),expression(italic("Amphiturnus")),expression(italic("Arphia")),expression(italic("Melanoplus")),expression(italic("Opeia")),expression(italic("Phoetaliotes"))),name = "d. 2020 Sweep Net Orthoptera Genera")+
+  scale_fill_brewer(palette = "Set3",labels=c(expression(italic("Ageneotettix")),expression(italic("Amphiturnus")),expression(italic("Arphia")),expression(italic("Melanoplus")),expression(italic("Opeia")),expression(italic("Phoetaliotes"))),name = "Genera")+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.43,0.81))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.71))+
+  geom_text(x=1.95, y=6, label="d. 2020 Sweep Net Orthoptera Genera",size=20)+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   theme(legend.text.align = 0)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
   theme(text = element_text(size = 45),legend.text=element_text(size=45))+
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
   annotate("text",x=1,y=2.85,label="a",size=15)+ #no grazing
@@ -782,19 +787,21 @@ Wide_Order_Weight<-Weight_Data_Summed%>%
   filter(Correct_Order!="Body_Parts") %>%
   filter(Plot!="NA") %>% 
   #Make a wide table using column correct order as overarching columns, fill with values from correct dry weight column, if there is no value for one cell, insert a zero
-  spread(key=Correct_Order,value=Correct_Dry_Weight_g, fill=0) %>% 
-  filter(Dataset=="D")
+  spread(key=Correct_Order,value=Correct_Dry_Weight_g, fill=0)
+
+par(mfrow=c(1,1))
 
 #Make new data frame called BC_Data and run an NMDS 
 BC_Data <- metaMDS(Wide_Order_Weight[,5:12])
 #Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
 sites <- 1:nrow(Wide_Order_Weight)
 #Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
-BC_Meta_Data <- Wide_Order_Weight[,1:4]
+BC_Meta_Data <- Wide_Order_Weight[,1:4] %>% 
+  mutate(Trt_DataSet=paste(Grazing_Treatment,Dataset,sep="."))
 #make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
-plot(BC_Data$points,col=as.factor(BC_Meta_Data$Grazing_Treatment))
+plot(BC_Data$points,col=as.factor(BC_Meta_Data$Trt_DataSet))
 #make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses and display by sites, add labels based on Watershed type.
-ordiellipse(BC_Data,groups = as.factor(BC_Meta_Data$Grazing_Treatment),kind = "sd",display = "sites", label = T)
+ordiellipse(BC_Data,groups = as.factor(BC_Meta_Data$Trt_DataSet),kind = "sd",display = "sites", label = T)
 
 #Use the vegan ellipse function to make ellipses           
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
@@ -804,11 +811,11 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
   t(center + scale * t(Circle %*% chol(cov)))
 }
 #Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
-BC_NMDS = data.frame(MDS1 = BC_Data$points[,1], MDS2 = BC_Data$points[,2],group=BC_Meta_Data$Grazing_Treatment)
+BC_NMDS = data.frame(MDS1 = BC_Data$points[,1], MDS2 = BC_Data$points[,2],group=BC_Meta_Data$Trt_DataSet)
 #Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
 BC_NMDS_Graph <- cbind(BC_Meta_Data,BC_NMDS)
 #Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
-BC_Ord_Ellipses<-ordiellipse(BC_Data, BC_Meta_Data$Grazing_Treatment, display = "sites",
+BC_Ord_Ellipses<-ordiellipse(BC_Data, BC_Meta_Data$Trt_DataSet, display = "sites",
                              kind = "se", conf = 0.95, label = T)
 #Make a new empty data frame called BC_Ellipses                
 BC_Ellipses <- data.frame()
@@ -821,16 +828,20 @@ for(g in unique(BC_NMDS$group)){
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
-  geom_point(size=6) +
+  geom_point(size=6, stroke = 2) +
   #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
   geom_path(data = BC_Ellipses, aes(x=NMDS1, y=NMDS2), size=3)+
-  #remove lintype legend
-  guides(linetype= FALSE)+
-  #Use different shapes according to Watershed types
-  scale_shape_discrete(name="Grazing Treatment", labels = c("No Grazing", "Low Grazing", "High Grazing"))+
-  scale_color_manual(values=c("thistle2","thistle3","thistle4"),labels = c("No Grazing", "Low Grazing", "High Grazing"),name="Grazing Treatment")+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  #Use different shapes 
+  scale_shape_manual(values=c(15,16,17,22,21,24),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"), breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
+  scale_color_manual(values=c("darkseagreen2","darkseagreen3","darkseagreen4","thistle2","thistle3","thistle4"),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"),breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"),breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
   #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.21,0.8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
   #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
   #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
   #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
@@ -838,9 +849,10 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   #Label the x-axis "NMDS1" and the y-axis "NMDS2"
   xlab("NMDS1")+
   ylab("NMDS2")+
-  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
-  annotate(geom="text", x=-0.7, y=0.8, label="b. 2020 D-Vac Net",size=20)
-#export at 1400x1400
+  theme(text = element_text(size = 45),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-1.63, y=0.8, label="c. 2020 Arthropods",size=20)
+#expand_limits(y=1)
+#export at 1500x1400
 
 
 ##PerMANOVA
