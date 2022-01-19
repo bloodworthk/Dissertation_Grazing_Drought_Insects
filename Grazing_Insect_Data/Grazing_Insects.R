@@ -864,25 +864,21 @@ Environment_Matrix <- Wide_Order_Weight[,1:4]
 
 Environment_Matrix$Dataset_Fact=as.factor(Environment_Matrix$Dataset)
 Environment_Matrix$Grazing_Treatment_Fact=as.factor(Environment_Matrix$Grazing_Treatment)
-Environment_Matrix$Block_Fact=as.factor(Environment_Matrix$Block)
+Environment_Matrix$Block_Fact=as.numeric(Environment_Matrix$Block)
 Environment_Matrix$Plot_Fact=as.factor(Environment_Matrix$Plot)
-Environment_Matrix$Grazing_Block=interaction(Environment_Matrix$Grazing_Treatment_Fact:Environment_Matrix$Block_Fact)
-Environment_Matrix$Grazing_Block_Plot=interaction(Environment_Matrix$Grazing_Block:Environment_Matrix$Plot_Fact)
-
-
-#Make a new dataframe with data from Relative_Cover
-Weight_Data_Summed2 <- Weight_Data_Summed%>%
-  filter(Dataset=="D") %>% 
-  select(-Dataset)
+Environment_Matrix$Grazing_Dataset=interaction(Environment_Matrix$Grazing_Treatment_Fact:Environment_Matrix$Dataset_Fact)
+Environment_Matrix$Grazing_Block_Plot=interaction(Environment_Matrix$Grazing_Dataset:Environment_Matrix$Plot_Fact)
 
 
 #Make a new dataframe with data from Relative_Cover2
-Wide_Order_Weight2 <- Weight_Data_Summed2%>%
+Wide_Order_Weight2 <- Weight_Data_Summed%>%
   #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
-  spread(key = Correct_Order, value = Correct_Dry_Weight_g, fill = 0)
+  spread(key = Correct_Order, value = Correct_Dry_Weight_g, fill = 0) %>% 
+  filter(Plot!="NA") %>% 
+  mutate(Grazing_Dataset=paste(Grazing_Treatment,Dataset,sep="_"))
 #run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
 #Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
-PerMANOVA2 <- adonis2(formula = Species_Matrix~Grazing_Treatment_Fact+Grazing_Treatment_Fact*Block_Fact, data=Environment_Matrix,permutations = 999, method = "bray")
+PerMANOVA2 <- adonis2(formula = Species_Matrix~Grazing_Treatment_Fact*Dataset_Fact + (1 | Block_Fact) , data=Environment_Matrix,permutations = 999, method = "bray")
 #give a print out of the PermMANOVA
 print(PerMANOVA2)  
 
@@ -891,8 +887,11 @@ print(PerMANOVA2)
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
 BC_Distance_Matrix <- vegdist(Species_Matrix)
 #Run a dissimilarity matrix (PermDisp) comparing grazing treatment
-Dispersion_Results_Grazing <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Grazing_Treatment)
+Dispersion_Results_Grazing <- betadisper(BC_Distance_Matrix,Wide_Order_Weight2$Grazing_Treatment)
 permutest(Dispersion_Results_Grazing,pairwise = T, permutations = 999)
-#Run a dissimilarity matrix (PermDisp) comparing block
-Dispersion_Results_Block <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Block)
-permutest(Dispersion_Results_Block,pairwise = T, permutations = 999)
+#Run a dissimilarity matrix (PermDisp) comparing dataset
+Dispersion_Results_Dataset <- betadisper(BC_Distance_Matrix,Wide_Order_Weight$Dataset)
+permutest(Dispersion_Results_Dataset,pairwise = T, permutations = 999)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment and dataset together
+Dispersion_Results_Grazing_Dataset <- betadisper(BC_Distance_Matrix,Wide_Order_Weight2$Grazing_Dataset)
+permutest(Dispersion_Results_Grazing_Dataset,pairwise = T, permutations = 999)
