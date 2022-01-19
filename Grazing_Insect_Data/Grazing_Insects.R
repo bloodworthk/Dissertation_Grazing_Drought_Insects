@@ -562,7 +562,7 @@ ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   scale_fill_brewer(palette = "Set3",labels=c(expression(italic("Ageneotettix")),expression(italic("Amphiturnus")),expression(italic("Arphia")),expression(italic("Melanoplus")),expression(italic("Opeia")),expression(italic("Phoetaliotes"))),name = "Genera")+
   scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.71))+
-  geom_text(x=1.95, y=6, label="d. 2020 Sweep Net Orthoptera Genera",size=20)+
+  geom_text(x=1.95, y=6, label="c. 2020 Sweep Net Orthoptera Genera",size=20)+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   theme(legend.text.align = 0)+
@@ -793,6 +793,10 @@ par(mfrow=c(1,1))
 
 #Make new data frame called BC_Data and run an NMDS 
 BC_Data <- metaMDS(Wide_Order_Weight[,5:12])
+
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data, Wide_Order_Weight, permutations = 999)
+head(intrinsics)
 #Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
 sites <- 1:nrow(Wide_Order_Weight)
 #Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
@@ -838,7 +842,7 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   #change order of legend
   #Use different shapes 
   scale_shape_manual(values=c(15,16,17,22,21,24),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"), breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
-  scale_color_manual(values=c("darkseagreen2","darkseagreen3","darkseagreen4","thistle2","thistle3","thistle4"),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"),breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
+  scale_color_manual(values=c("darkseagreen2","blue4","maroon4","thistle2","darkorange4","deepskyblue4"),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"),breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
   scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c( "No Grazing - Sweep Net", "Low Grazing - Sweep Net","High Grazing - Sweep Net","No Grazing - D-Vac","Low Grazing - D-Vac", "High Grazing - D-Vac"),breaks = c("0.S","1.S","2.S","0.D","1.D","2.D"),name="")+
   #make the text size of the legend titles 28
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
@@ -850,7 +854,7 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   xlab("NMDS1")+
   ylab("NMDS2")+
   theme(text = element_text(size = 45),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.63, y=0.8, label="c. 2020 Arthropods",size=20)
+  annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
 #expand_limits(y=1)
 #export at 1500x1400
 
