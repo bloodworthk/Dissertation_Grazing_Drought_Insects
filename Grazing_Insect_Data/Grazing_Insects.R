@@ -20,13 +20,13 @@ library(lmerTest)
 library(nationalparkcolors)
 
 #### Load in data ####
-Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
+Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) %>% 
 rename(Grazing_Treatment=ï..Grazing_Treatment)
-Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) #%>% 
+Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) %>% 
 rename(Grazing_Treatment=ï..Grazing_Treatment)
-D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) #%>% 
+D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) %>% 
 rename(Grazing_Treatment=ï..Grazing_Treatment)
-D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>% 
+D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) %>% 
 rename(Grazing_Treatment=ï..Grazing_Treatment)
 
 #Set ggplot2 theme to black and white
@@ -364,12 +364,12 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)+
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-  annotate("text",x=1,y=2.9,label="a",size=15)+ #no grazing
-  annotate("text",x=2,y=5.5,label="b",size=15)+ #low grazing
-  annotate("text",x=3,y=3.4,label="a",size=15) #high grazing
+  annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
+  annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+  annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
 #Save at the graph at 1400x1400
 
 
@@ -406,12 +406,12 @@ ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
   #Make the y-axis extend
   expand_limits(y=0.3)+
-  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=1.1, y=0.3, label="b. 2020 D-Vac",size=20)+
   #low grazing is different than high grazing, no and high grazing are the same, no grazing and low grazing are the same
-  annotate("text",x=1,y=0.14,label="ab",size=15)+ #no grazing
-  annotate("text",x=2,y=0.285,label="a",size=15)+ #low grazing
-  annotate("text",x=3,y=0.17,label="b",size=15) #high grazing
+  annotate("text",x=1,y=0.14,label="ab",size=20)+ #no grazing
+  annotate("text",x=2,y=0.285,label="a",size=20)+ #low grazing
+  annotate("text",x=3,y=0.17,label="b",size=20) #high grazing
 #Save at the graph at 1400x1400
 
 #### Graph of Weights from D-vac by Grazing treatment - NO orthoptera ####
@@ -567,12 +567,12 @@ ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   expand_limits(y=6)+
   theme(legend.text.align = 0)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 45),legend.text=element_text(size=45))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-  annotate("text",x=1,y=2.85,label="a",size=15)+ #no grazing
-  annotate("text",x=2,y=5.5,label="b",size=15)+ #low grazing
-  annotate("text",x=3,y=3.30,label="a",size=15) #high grazing
-#Save at the graph at 1500x1500
+  annotate("text",x=1,y=2.85,label="a",size=20)+ #no grazing
+  annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+  annotate("text",x=3,y=3.30,label="a",size=20) #high grazing
+#Save at the graph at 1400x1400
 
 
 #### Changes in Orthoptera genra by grazing treatment - D-Vac####
@@ -832,9 +832,9 @@ for(g in unique(BC_NMDS$group)){
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
-  geom_point(size=6, stroke = 2) +
+  geom_point(size=8, stroke = 2) +
   #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
-  geom_path(data = BC_Ellipses, aes(x=NMDS1, y=NMDS2), size=3)+
+  geom_path(data = BC_Ellipses, aes(x=NMDS1, y=NMDS2), size=4)+
   #make shape, color, and linetype in one combined legend instead of three legends
   labs(color  = "", linetype = "", shape = "")+
   # make legend 2 columns
@@ -853,7 +853,7 @@ ggplot(data = BC_NMDS_Graph, aes(MDS1,MDS2, shape = group,color=group,linetype=g
   #Label the x-axis "NMDS1" and the y-axis "NMDS2"
   xlab("NMDS1")+
   ylab("NMDS2")+
-  theme(text = element_text(size = 45),legend.text=element_text(size=40))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
   annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
 #expand_limits(y=1)
 #export at 1500x1400
@@ -899,3 +899,4 @@ permutest(Dispersion_Results_Dataset,pairwise = T, permutations = 999)
 #Run a dissimilarity matrix (PermDisp) comparing grazing treatment and dataset together
 Dispersion_Results_Grazing_Dataset <- betadisper(BC_Distance_Matrix,Wide_Order_Weight2$Grazing_Dataset)
 permutest(Dispersion_Results_Grazing_Dataset,pairwise = T, permutations = 999)
+
