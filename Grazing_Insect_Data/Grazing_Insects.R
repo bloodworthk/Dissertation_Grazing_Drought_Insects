@@ -531,6 +531,7 @@ summary(AOV_SweepNet_Phoetaliotes)
 #SweepNet - Melanoplus
 AOV_SweepNet_Melanoplus <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Melanoplus"))
 summary(AOV_SweepNet_Melanoplus)
+TukeyHSD(AOV_SweepNet_Melanoplus)
 
 #SweepNet - Ageneotettix
 AOV_SweepNet_Ageneotettix <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_S,Correct_Genus=="Ageneotettix"))
@@ -607,6 +608,7 @@ summary(AOV_DVac_Phoetaliotes)
 #dvac - Melanoplus
 AOV_DVac_Melanoplus <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Melanoplus"))
 summary(AOV_DVac_Melanoplus)
+TukeyHSD(AOV_DVac_Melanoplus)
 
 #dvac - Ageneotettix
 AOV_DVac_Ageneotettix <- aov(Correct_Dry_Weight_g~Grazing_Treatment+(1|Block),data=subset(Weight_Orthoptera_D,Correct_Genus=="Ageneotettix"))
