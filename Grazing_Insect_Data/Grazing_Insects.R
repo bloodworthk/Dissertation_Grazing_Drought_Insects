@@ -5,7 +5,7 @@
 #### Set working directory and load libraries ####
 
 # Set Working Directory - Mac
-setwd("/Users/kathrynbloodworth/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
+setwd("~/Dropbox (Smithsonian)/Projects/Dissertation/Data/Insect_Data")
 
 
 #PC
@@ -20,14 +20,20 @@ library(lmerTest)
 library(nationalparkcolors)
 
 #### Load in data ####
+#2020 data
 Sweepnet_weight<-read.csv("2020_Sweep_Net_Weight_Data_FK.csv", header=T) #%>% 
-rename(Grazing_Treatment=ï..Grazing_Treatment)
+#rename(Grazing_Treatment=ï..Grazing_Treatment)
 Sweepnet_ID<-read.csv("2020_Sweep_Net_Data_FK.csv", header=T) #%>% 
-rename(Grazing_Treatment=ï..Grazing_Treatment)
+#rename(Grazing_Treatment=ï..Grazing_Treatment)
 D_Vac_Weight<-read.csv("2020_DVac_Weight_Data_FK.csv", header=T) #%>% 
-rename(Grazing_Treatment=ï..Grazing_Treatment)
+#rename(Grazing_Treatment=ï..Grazing_Treatment)
 D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>% 
-rename(Grazing_Treatment=ï..Grazing_Treatment)
+#rename(Grazing_Treatment=ï..Grazing_Treatment)
+
+#2021 data
+ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
+  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample,Order,Family,Genus,Species,Notes,IDer,Date.Started,Date.Completed)
+Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -38,6 +44,7 @@ theme_update(panel.grid.major=element_blank(),
 
 #### Formatting Data ####
 
+#2020 Data
 #make new dataframe for sweepnet ID changing block to numerical counts, and remnaming incorrect columns and adding dataset type and plot number (1) to columns
 S_ID<-Sweepnet_ID %>% 
   mutate(Block=ifelse(Grazing_Treatment=="B3",3,ifelse(Grazing_Treatment=="B2",2,1))) %>%
@@ -128,7 +135,7 @@ ID_Data_Correct<-transform(ID_Data_Correct, Sample = as.character(Sample))
 
 
 #seperate out Orthoptera ID into separate Datasheet
-Orthoptera_ID_Data<-ID_Data %>% 
+Orthoptera_ID_Data<-ID_Data_Correct %>% 
   filter(Correct_Order=="Orthoptera")
 
 #Merge S_Weight and D_Weight#
@@ -359,7 +366,7 @@ ggplot(Weight_by_Grazing_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
   scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("2"="High Graznig","0"="No Grazing","1"="Low Grazing"))+
+  scale_x_discrete(labels=c("2"="High Grazing","0"="No Grazing","1"="Low Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
@@ -383,7 +390,7 @@ ggplot(subset(Weight_by_Grazing_S,Correct_Order!="Orthoptera"),aes(x=Grazing_Tre
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera"))+
-  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Grazing","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
   #Make the y-axis extend
   expand_limits(y=0.2)+
@@ -402,7 +409,7 @@ ggplot(Weight_by_Grazing_D,aes(x=Grazing_Treatment,y=Average_Weight, fill=Correc
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"))+
-  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Grazing","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="none")+
   #Make the y-axis extend
   expand_limits(y=0.3)+
@@ -560,9 +567,9 @@ ggplot(Weight_Orthoptera_Avg_S,aes(x=Grazing_Treatment,y=Average_Weight, fill=Co
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
   scale_fill_brewer(palette = "Set3",labels=c(expression(italic("Ageneotettix")),expression(italic("Amphiturnus")),expression(italic("Arphia")),expression(italic("Melanoplus")),expression(italic("Opeia")),expression(italic("Phoetaliotes"))),name = "Genera")+
-  scale_x_discrete(labels=c("2"="High Graznig","1"="Low Grazing","0"="No Grazing"))+
+  scale_x_discrete(labels=c("2"="High Grazing","1"="Low Grazing","0"="No Grazing"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.71))+
-  geom_text(x=1.95, y=6, label="c. 2020 Sweep Net Orthoptera Genera",size=20)+
+  geom_text(x=1.95, y=6, label="c. 2020 Sweep Net Orthoptera",size=20)+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   theme(legend.text.align = 0)+
@@ -886,7 +893,7 @@ PerMANOVA2 <- adonis2(formula = Species_Matrix~Grazing_Treatment_Fact*Dataset_Fa
 #give a print out of the PermMANOVA
 print(PerMANOVA2)  
 
-##PermDisp -- not sure if i should run this since PerMANOVA was not significant 
+##PermDisp 
 
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
 BC_Distance_Matrix <- vegdist(Species_Matrix)
