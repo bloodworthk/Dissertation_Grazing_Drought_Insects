@@ -32,7 +32,7 @@ D_Vac_ID<-read.csv("2020_DVac_Data_FK.csv", header=T) #%>%
 
 #2021 data
 ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
-  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample,Order,Family,Genus,Species,Notes,IDer,Date.Started,Date.Completed)
+  select(Collection_Method, Year, Block, Grazing_Treatment, Plot, Sample, Order, Family, Genus, Species, Notes, IDer, Date.Started, Date.Completed)
 Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T)
 
 #Set ggplot2 theme to black and white
