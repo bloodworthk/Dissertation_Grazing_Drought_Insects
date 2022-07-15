@@ -72,7 +72,7 @@ ID_21<-ID_Data_21 %>%
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample,Correct_Order,Correct_Family,Correct_Genus,Correct_Species,Notes) %>% 
   mutate(Sample=as.numeric(Sample))
-  
+
 #Merge together data frames
 
 ID_Data_Official<-ID_20_Correct %>% 
@@ -93,10 +93,10 @@ Weight_20<-Weight_Data_20 %>%
   mutate(Correct_Order=ifelse(Notes=="Body Parts","Body_Parts",ifelse(Notes=="Body parts","Body_Parts",ifelse(Notes=="unknown","unknown",Correct_Order)))) %>%
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
-  
-  
-  
-  
+
+
+
+
 Weight_21<-Weight_Data_21 %>%  
   #change grazing treatments to be correct
   mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="LG ","LG",ifelse(Grazing_Treatment=="LH","LG",Grazing_Treatment))) %>% 
@@ -108,7 +108,7 @@ Weight_21<-Weight_Data_21 %>%
   mutate(Correct_Order=ifelse(Order=="aranea","Araneae",ifelse(Order=="body_parts","Body_Parts",ifelse(Order=="Body Parts","Body_Parts",ifelse(Order=="Body_Parts ","Body_Parts",ifelse(Order=="coleoptera","Coleoptera",ifelse(Order=="Coleoptera ","Coleoptera",ifelse(Order=="diptera","Diptera",ifelse(Order=="hemiptera","Hemiptera",ifelse(Order=="hymenoptera","Hymenoptera",ifelse(Order=="Orthoptera ","Orthoptera",ifelse(Order=="body parts","Body_Parts",ifelse(Order=="Cicadellidae","Hemiptera",Order))))))))))))) %>% 
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
-  
+
 #Merge together data frames
 
 Weight_Data_Official<-Weight_20 %>% 
@@ -117,10 +117,3 @@ Weight_Data_Official<-Weight_20 %>%
   mutate(Plot=ifelse(Collection_Method=="sweep_net",100,Plot)) %>% 
   #replace any weight that is <0.0001 with 0.00001 %>% 
   mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00001",Dry_Weight_g)))
-  
-  
-  
-  
-  
-  
-
