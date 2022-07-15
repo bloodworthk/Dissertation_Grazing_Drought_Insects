@@ -116,4 +116,29 @@ Weight_Data_Official<-Weight_20 %>%
   #replace plot # for sweepnet with 100 (so not confused with others)
   mutate(Plot=ifelse(Collection_Method=="sweep_net",100,Plot)) %>% 
   #replace any weight that is <0.0001 with 0.00001 %>% 
-  mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00001",Dry_Weight_g)))
+  mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00005",Dry_Weight_g))) %>% 
+  #Create a column that merges together treatment data and year
+  mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
+  #Remove NAs from Dry weight
+  filter(!is.na(Dry_Weight_g)) 
+  
+
+
+####Total Plot Weight Differences ####
+
+#Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots --- not working properly
+Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, data=Weight_Data_Official, FUN=sum, na.rm=FALSE) 
+
+#Seperating out Treatment_Plot into all distinctions again so that we can group based on different things
+Weight_Data_Summed<-Weight_Data_Summed %>% 
+  separate(Treatment_Plot, c("Dataset", "Grazing_Treatment","Block","Plot"), "_")
+
+Weight_Data_Summed_S<-Weight_Data_Summed %>% 
+  filter(Dataset=="S")
+
+#### Anova comparing insect weights by grazing treatment  Sweep net #####
+Weight_Data_S_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_S) 
+summary(Weight_Data_S_AOV)
+model.tables(Weight_Data_S_AOV)
+
+
