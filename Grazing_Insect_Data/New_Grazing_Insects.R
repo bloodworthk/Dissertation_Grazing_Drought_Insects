@@ -38,7 +38,6 @@ Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>%
 
 #### Formatting and Cleaning ID Data ####
 
-
 ID_20<-ID_Data_20 %>% 
   #Change block and grazing treatment to be consistent
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
@@ -95,9 +94,6 @@ Weight_20<-Weight_Data_20 %>%
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
 
-
-
-
 Weight_21<-Weight_Data_21 %>%  
   #change grazing treatments to be correct
   mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="LG ","LG",ifelse(Grazing_Treatment=="LH","LG",Grazing_Treatment))) %>% 
@@ -120,8 +116,23 @@ Weight_Data_Official<-Weight_20 %>%
   mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00005",Dry_Weight_g))) %>% 
   #Create a column that merges together treatment data and year
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
+  mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "_")) %>% 
+  mutate(Coll_Year_Bl_Trt=ifelse(Coll_Year_Bl_Trt="dvac_2021_1_NG_33","dvac_2021_3_NG_33"))
   #Remove NAs from Dry weight
   filter(!is.na(Dry_Weight_g)) 
+  
+  #B1NG - plot 33 (# should be 0.0140), B1HG-20, B2LG-32, B2LG-40,B3LG-32, B3LG-35
+  
+  #Plot 1-5 - B1 NG
+  #Plot 6-10 - B1 LG
+  #Plot 11-15 - B1 HG
+  #Plot 16-20 - B2 NG
+  #Plot 21-25 - B2 LG
+  #Plot 26-30 - B2 HG
+  #Plot 31-35 - B3 NG
+  #Plot 36-40 - B3 LG
+  #Plot 41-45 - B3 HG
+  
 
 ####Total Plot Weight Differences ####
 
