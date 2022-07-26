@@ -16,7 +16,6 @@ library(tidyverse)
 library(scales)
 library(vegan)
 library(lmerTest)
-library(nationalparkcolors)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -32,8 +31,10 @@ ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T)
 
 #Weight Data
 Weight_Data_20<-read.csv("2020_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
-  rename(Sample_Number=Sample_num)
-Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T)
+  rename(Sample_Number=Sample_num) %>% 
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
 
 #### Formatting and Cleaning ID Data ####
 
@@ -75,7 +76,7 @@ ID_21<-ID_Data_21 %>%
 
 #Merge together data frames
 
-ID_Data_Official<-ID_20_Correct %>% 
+ID_Data_Official<-ID_20 %>% 
   rbind(ID_21)
 
 ####Check data
@@ -121,8 +122,6 @@ Weight_Data_Official<-Weight_20 %>%
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   #Remove NAs from Dry weight
   filter(!is.na(Dry_Weight_g)) 
-  
-
 
 ####Total Plot Weight Differences ####
 
@@ -131,14 +130,63 @@ Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, 
 
 #Seperating out Treatment_Plot into all distinctions again so that we can group based on different things
 Weight_Data_Summed<-Weight_Data_Summed %>% 
-  separate(Treatment_Plot, c("Dataset", "Grazing_Treatment","Block","Plot"), "_")
+  separate(Coll_Year_Bl_Trt, c("Collection_Method","Year","Block","Grazing_Treatment"), "_")
 
-Weight_Data_Summed_S<-Weight_Data_Summed %>% 
+#create dataframe that just has sweepnet samples in it
+Weight_Data_Summed_sweep<-Weight_Data_Summed %>% 
+  filter(Collection_Method=="sweep") %>% 
+  #sum by plot #
+  group_by(Year,Block,Grazing_Treatment,Plot) %>% 
+  summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
+  ungroup()
+
+#create dataframe that just has dvac samples in it
+Weight_Data_Summed_dvac<-Weight_Data_Summed %>% 
+  filter(Collection_Method=="dvac") %>% 
+  #sum by plot #
+  group_by(Year,Block,Grazing_Treatment,Plot) %>% 
+  summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
+  ungroup()
+
+
+
+### Average by order across Grazing treatment ####
+Weight_by_Grazing<-Weight_Data_Summed %>% 
+  group_by(Dataset,Grazing_Treatment, Correct_Order) %>% 
+  summarise(Average_Weight=mean(Correct_Dry_Weight_g),Weight_SD=sd(Correct_Dry_Weight_g),Weight_n=length(Correct_Dry_Weight_g)) %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts")
+
+Weight_by_Grazing_S<-Weight_by_Grazing %>% 
   filter(Dataset=="S")
 
-#### Anova comparing insect weights by grazing treatment  Sweep net #####
-Weight_Data_S_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_S) 
-summary(Weight_Data_S_AOV)
-model.tables(Weight_Data_S_AOV)
+Weight_by_Grazing_D<-Weight_by_Grazing %>% 
+  filter(Dataset=="D")
 
+#### Figures ####
 
+#### Graph of Weights from Sweep Net by Grazing treatment #### 
+ggplot(Weight_Data_Summed_sweep,aes(x=Grazing_Treatment,y=Dry_Weight_g, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  theme(legend.background=element_blank())+
+  #scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Order")+
+  scale_x_discrete(labels=c("2"="High Grazing","0"="No Grazing","1"="Low Grazing"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.715))+
+  #Make the y-axis extend to 50
+  expand_limits(y=6)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)
+  #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
+  #annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
+  #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+  #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
+#Save at the graph at 1400x1400
