@@ -117,35 +117,89 @@ Weight_21<-Weight_Data_21 %>%
 Weight_Data_Official<-Weight_20 %>% 
   rbind(Weight_21) %>% 
   #replace plot # for sweepnet with 100 (so not confused with others)
-  mutate(Plot=ifelse(Collection_Method=="sweep_net",100,Plot)) %>% 
+  mutate(Plot=ifelse(Collection_Method=="sweep",100,Plot)) %>% 
   #replace any weight that is <0.0001 with 0.00001 %>% 
   mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00005",Dry_Weight_g))) %>% 
   #Create a column that merges together treatment data and year
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
-  mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "_")) %>% 
-  mutate(Coll_Year_Bl_Trt=ifelse(Coll_Year_Bl_Trt="dvac_2021_1_NG_33","dvac_2021_3_NG_33"))
-  #Remove NAs from Dry weight
-  filter(!is.na(Dry_Weight_g)) 
-  
-  #B1NG - plot 33 (# should be 0.0140), B1HG-20, B2LG-32, B2LG-40,B3LG-32, B3LG-35
-  
-  #Plot 1-5 - B1 NG
-  #Plot 6-10 - B1 LG
-  #Plot 11-15 - B1 HG
-  #Plot 16-20 - B2 NG
-  #Plot 21-25 - B2 LG
-  #Plot 26-30 - B2 HG
-  #Plot 31-35 - B3 NG
-  #Plot 36-40 - B3 LG
-  #Plot 41-45 - B3 HG
-  
+  mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-")) %>% 
+  mutate(Coll_Year_Bl_Trt_Pl=ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2021_1_NG_33","dvac_2021_3_NG_33",Coll_Year_Bl_Trt_Pl)) %>% 
+  #fix plot numbers to be correct numbers
+  mutate(Coll_Year_Bl_Trt_Pl=ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_NG-1","dvac_2020_1_NG-1",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_NG-2","dvac_2020_1_NG-2",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_NG-3","dvac_2020_1_NG-3",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_NG-4","dvac_2020_1_NG-4",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_NG-5","dvac_2020_1_NG-5",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_LG-1","dvac_2020_1_LG-6",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_LG-2","dvac_2020_1_LG-7",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_LG-3","dvac_2020_1_LG-8",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_LG-4","dvac_2020_1_LG-9",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_LG-5","dvac_2020_1_LG-10",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_HG-1","dvac_2020_1_HG-11",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_HG-2","dvac_2020_1_HG-12",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_HG-3","dvac_2020_1_HG-13",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_HG-4","dvac_2020_1_HG-14",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_1_HG-5","dvac_2020_1_HG-15",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_NG-1","dvac_2020_2_NG-16",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_NG-2","dvac_2020_2_NG-17",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_NG-3","dvac_2020_2_NG-18",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_NG-4","dvac_2020_2_NG-19",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_NG-5","dvac_2020_2_NG-20",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_LG-1","dvac_2020_2_LG-21",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_LG-2","dvac_2020_2_LG-22",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_LG-3","dvac_2020_2_LG-23",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_LG-4","dvac_2020_2_LG-24",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_LG-5","dvac_2020_2_LG-25",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_HG-1","dvac_2020_2_HG-26",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_HG-2","dvac_2020_2_HG-27",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_HG-3","dvac_2020_2_HG-28",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_HG-4","dvac_2020_2_HG-29",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_2_HG-5","dvac_2020_2_HG-30",    
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_NG-1","dvac_2020_3_NG-31",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_NG-2","dvac_2020_3_NG-32",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_NG-3","dvac_2020_3_NG-33",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_NG-4","dvac_2020_3_NG-34",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_NG-5","dvac_2020_3_NG-35",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_LG-1","dvac_2020_3_LG-36",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_LG-2","dvac_2020_3_LG-37",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_LG-3","dvac_2020_3_LG-38",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_LG-4","dvac_2020_3_LG-39",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_LG-5","dvac_2020_3_LG-40",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-1","dvac_2020_3_HG-41",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-2","dvac_2020_3_HG-42",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-3","dvac_2020_3_HG-43",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-4","dvac_2020_3_HG-44",
+                             ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-5","dvac_2020_3_HG-45", 
+                             Coll_Year_Bl_Trt_Pl)))))))))))))))))))))))))))))))))))))))))))))) %>% 
+  select(Coll_Year_Bl_Trt_Pl,Sample_Number,Correct_Order,Dry_Weight_g,Notes) %>% 
+  #RemovNAs from Dry weight
+  filter(!is.na(Dry_Weight_g)) %>% 
+  separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-")
+
+#fix data entry errors 
+Weight_Data_Official[1703, "Dry_Weight_g"] <- 0.0140
+Weight_Data_Official[1614, "Plot"] <- 40
+Weight_Data_Official[45,"Plot"] <- 16
+Weight_Data_Official[1521,"Coll_Year_Bl_Trt"] <- "dvac_2021_2_NG"
+Weight_Data_Official[1528,"Coll_Year_Bl_Trt"] <- "dvac_2021_2_NG"
+Weight_Data_Official[1606,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1607,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1608,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1609,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1610,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1611,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1612,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1613,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1703,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1699,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
+Weight_Data_Official[1628,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_LG"
 
 ####Total Plot Weight Differences ####
 
 #Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots --- not working properly
 Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, data=Weight_Data_Official, FUN=sum, na.rm=FALSE) 
 
-#Seperating out Treatment_Plot into all distinctions again so that we can group based on different things
+#Separating out Treatment_Plot into all distinctions again so that we can group based on different things
 Weight_Data_Summed<-Weight_Data_Summed %>% 
   separate(Coll_Year_Bl_Trt, c("Collection_Method","Year","Block","Grazing_Treatment"), "_")
 
@@ -166,42 +220,39 @@ Weight_Data_Summed_dvac<-Weight_Data_Summed %>%
   ungroup()
 
 
+### Average Plot Weight across Grazing treatment ####
+Weight_by_Grazing_sweep<-Weight_Data_Summed_sweep %>% 
+  group_by(Year,Grazing_Treatment) %>% 
+  summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) 
 
-### Average by order across Grazing treatment ####
-Weight_by_Grazing<-Weight_Data_Summed %>% 
-  group_by(Dataset,Grazing_Treatment, Correct_Order) %>% 
-  summarise(Average_Weight=mean(Correct_Dry_Weight_g),Weight_SD=sd(Correct_Dry_Weight_g),Weight_n=length(Correct_Dry_Weight_g)) %>% 
-  filter(Correct_Order!="Unknown_1") %>% 
-  filter(Correct_Order!="Unknown") %>% 
-  filter(Correct_Order!="Snail") %>% 
-  filter(Correct_Order!="Body_Parts")
+Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>% 
+  group_by(Year,Grazing_Treatment) %>% 
+  summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n))
 
-Weight_by_Grazing_S<-Weight_by_Grazing %>% 
-  filter(Dataset=="S")
 
-Weight_by_Grazing_D<-Weight_by_Grazing %>% 
-  filter(Dataset=="D")
+#### Total Plot Weight Differences - Figures ####
 
-#### Figures ####
-
-#### Graph of Weights from Sweep Net by Grazing treatment #### 
-ggplot(Weight_Data_Summed_sweep,aes(x=Grazing_Treatment,y=Dry_Weight_g, fill=Correct_Order, position="stack"))+
+#Graph of Weights from Sweep Net by Grazing treatment- 2020
+ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
+  geom_bar(stat="identity",position = "dodge")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
   #Label the x-axis "Treatment"
   xlab("Grazing Treatment")+
   #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
+  ylab("Average Plot Weight (g)")+
   theme(legend.background=element_blank())+
-  #scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lygaeidae","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("2"="High Grazing","0"="No Grazing","1"="Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position=c(0.18,0.715))+
+  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
-  expand_limits(y=6)+
+  expand_limits(y=8)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=6, label="a. 2020 Sweep Net",size=20)
+  geom_text(x=1.3, y=8, label="2020 Sweep Net",size=20)
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
   #annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
   #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
