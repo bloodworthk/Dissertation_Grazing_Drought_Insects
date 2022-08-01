@@ -52,6 +52,11 @@ ID_20<-ID_Data_20 %>%
   #make sample # numeric instead of character 
   mutate(Sample=as.numeric(Sample))###why are there na's? check data
 
+#fix data entry errors - 2020 - Sweep Net check B3, NG,Plot 100 sample 17 - should be Phoetaliotes nebranscensis
+ID_20[1067, "Correct_Genus"] <- "Phoetaliotes"
+#fix data entry errors - 2020 - sweep net check B3, NG,Plot 100 sample 18 - should be melanoplus gladstoni
+ID_20[1115, "Correct_Genus"] <- "Melanoplus"
+
 ID_21<-ID_Data_21 %>% 
   #Change block and grazing treatment to be consistent and match plot numbers
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
@@ -73,14 +78,15 @@ ID_21<-ID_Data_21 %>%
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample,Correct_Order,Correct_Family,Correct_Genus,Correct_Species,Notes) %>% 
   mutate(Sample=as.numeric(Sample))
 
+#fix data entry errors - 2021 - Dvac check B2, HG,Plot 29 sample 2 - should be Ageneotettix deorum
+ID_21[261, "Correct_Species"] <- "deorum"
+#fix data entry errors - 2021 - Dvac check B1, HG,Plot 15 sample 5 -  should be Melanoplus brunri
+ID_21[283, "Correct_Species"] <- "bruneri"
+
 #Merge together data frames
 
 ID_Data_Official<-ID_20 %>% 
   rbind(ID_21)
-
-####Check data
-#2020 Sweep Net check B3, NG,Plot 100 sample 17 - Ageneotettix deorum or Phoetaliotes nebranscensis?, sweep net check B3, NG,Plot 100 sample 18 - Phoetaliotes nebranscensis melanoplus gladstoni?
-#2021 - Dvac check B2, HG,Plot 29 sample 2 - Ageneotettix deorum or arphia pseudonietana, Dvac check B1, HG,Plot 15 sample 5 - Ageneotettix deorum or melanoplus something?
 
 #### Formatting and Cleaning Weight Data ####
 
