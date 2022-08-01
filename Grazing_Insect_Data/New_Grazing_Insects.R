@@ -16,6 +16,8 @@ library(tidyverse)
 library(scales)
 library(vegan)
 library(lmerTest)
+#install.packages("devtools")
+library(grid)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -196,7 +198,7 @@ Weight_Data_Official[1628,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_LG"
 
 ####Total Plot Weight Differences ####
 
-#Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots --- not working properly
+#Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
 Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, data=Weight_Data_Official, FUN=sum, na.rm=FALSE) 
 
 #Separating out Treatment_Plot into all distinctions again so that we can group based on different things
@@ -234,8 +236,9 @@ Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>%
 
 #### Total Plot Weight Differences - Figures ####
 
+# 2020 - Sweepnet
 #Graph of Weights from Sweep Net by Grazing treatment- 2020
-ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+SN_2020_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity",position = "dodge")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -252,9 +255,147 @@ ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Treatment,y=Aver
   expand_limits(y=8)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=8, label="2020 Sweep Net",size=20)
+  geom_text(x=1.1, y=8, label="2020 Sweep Net",size=20)
   #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
   #annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
   #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
   #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1400x1400
+#Save at the graph at 1500x1500
+
+# 2021 - Sweepnet
+#Graph of Weights from Sweep Net by Grazing treatment- 2020
+SN_2021_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+ 
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.1, y=1, label="2021 Sweep Net",size=20)
+#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
+#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
+#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+# 2020 - Dvac
+#Graph of Weights from Sweep Net by Grazing treatment- 2020
+Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.4)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.1, y=0.4, label="2020 DVac",size=20)
+#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
+#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
+#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+# 2021 - Dvac
+#Graph of Weights from Sweep Net by Grazing treatment- 2020
+Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.15)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.1, y=0.15, label="2021 Dvac",size=20)
+#low grazing is different from high grazing, no grazing is different from high grazing -- change text below
+#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
+#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
+#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+### Put all graphs together
+pushViewport(viewport(layout=grid.layout(2,2)))
+#print out the viewport plot where the Species_Richness_plot is at position 1,1
+print(SN_2020_Plot,vp=viewport(layout.pos.row=1, layout.pos.col =1))
+#print out the viewport plot where the Species_Richness_plot is at position 1,2
+print(SN_2021_Plot,vp=viewport(layout.pos.row=1, layout.pos.col =2))
+#print out the viewport plot where the Species_Richness_plot is at position 1,1
+print(Dvac_2020_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =1))
+#print out the viewport plot where the Species_Richness_plot is at position 1,2
+print(Dvac_2021_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =2))
+#Save at 1800 x 1000 
+
+#### Glmm for Plot Weights by Grazing Treatment####
+
+# 2020 Sweep net
+Plot_Weight_S_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2020))
+summary(Plot_Weight_S_2020_Glmm)
+anova(Plot_Weight_S_2020_Glmm)
+
+# 2021 Sweep Net
+Plot_Weight_S_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
+summary(Plot_Weight_S_2021_Glmm)
+anova(Plot_Weight_S_2021_Glmm)
+
+# 2020 Dvac
+Plot_Weight_D_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
+summary(Plot_Weight_D_2020_Glmm)
+anova(Plot_Weight_D_2020_Glmm)
+
+# 2021 Dvac
+Plot_Weight_D_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
+summary(Plot_Weight_D_2021_Glmm)
+anova(Plot_Weight_D_2021_Glmm) #grazing treatment is significantly different 
+
+
+
+#### Average by order across Grazing treatment ####
+
+#Averaging
+Weight_by_Order<-Weight_Data_Summed %>% 
+  group_by(Collection_Method,Year, Grazing_Treatment, Correct_Order) %>% 
+  summarise(Average_Weight=mean(Dry_Weight_g),Weight_SD=sd(Dry_Weight_g),Weight_n=length(Dry_Weight_g)) %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>% 
+  ungroup()
+
+#Seperating out sweep net
+Weight_by_Order_Sweepnet<-Weight_by_Order %>% 
+  filter(Collection_Method=="sweep")
+
+#Seperating out dvac
+Weight_by_Order_Dvac<-Weight_by_Order %>% 
+  filter(Collection_Method=="dvac")
+
+
+
+
