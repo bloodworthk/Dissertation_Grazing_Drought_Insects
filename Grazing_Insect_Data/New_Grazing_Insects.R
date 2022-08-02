@@ -542,6 +542,12 @@ Weight_Orthoptera_Summed <- Weight_Orthoptera_Official %>%
   summarise(Genus_Weight=sum(Dry_Weight_g)) %>% 
   ungroup()
 
+Weight_Orthoptera_Summed_S<-Weight_Orthoptera_Summed %>% 
+  filter(Collection_Method=="sweep")
+
+Weight_Orthoptera_Summed_D<-Weight_Orthoptera_Summed %>% 
+  filter(Collection_Method=="dvac")
+
 #Sweepnet
 #make table a graph looking at differences in genus weight by grazing treatment
 Weight_Orthoptera_Avg_S<-Weight_Orthoptera_Summed %>% 
@@ -661,4 +667,26 @@ ggplot(subset(Weight_Orthoptera_Avg_D,Year==2021),aes(x=Grazing_Treatment,y=Aver
 #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
 #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
 #Save at the graph at 1400x1400
+
+#### Glmm for Orthoptera Weights by Grazing Treatment####
+
+# 2020 Sweep net
+Orthoptera_Weight_S_2020_Glmm <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
+summary(Orthoptera_Weight_S_2020_Glmm)
+anova(Orthoptera_Weight_S_2020_Glmm)
+
+# 2021 Sweep Net
+Orthoptera_Weight_S_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
+summary(Orthoptera_Weight_S_2021_Glmm)
+anova(Orthoptera_Weight_S_2021_Glmm)
+
+# 2020 Dvac
+Orthoptera_Weight_D_2020_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
+summary(Orthoptera_Weight_D_2020_Glmm)
+anova(Orthoptera_Weight_D_2020_Glmm)
+
+# 2021 Dvac
+Orthoptera_Weight_D_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
+summary(Orthoptera_Weight_D_2021_Glmm)
+anova(Orthoptera_Weight_D_2021_Glmm)
 
