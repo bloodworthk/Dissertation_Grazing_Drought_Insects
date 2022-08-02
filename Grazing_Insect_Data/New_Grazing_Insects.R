@@ -18,6 +18,9 @@ library(vegan)
 library(lmerTest)
 #install.packages("devtools")
 library(grid)
+#install.packages("multcomp")
+library(multcomp)
+
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -374,24 +377,23 @@ print(Dvac_2021_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =2))
 
 # 2020 Sweep net
 Plot_Weight_S_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2020))
-summary(Plot_Weight_S_2020_Glmm)
 anova(Plot_Weight_S_2020_Glmm)
 
 # 2021 Sweep Net
 Plot_Weight_S_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
-summary(Plot_Weight_S_2021_Glmm)
 anova(Plot_Weight_S_2021_Glmm)
 
 # 2020 Dvac
 Plot_Weight_D_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
-summary(Plot_Weight_D_2020_Glmm)
 anova(Plot_Weight_D_2020_Glmm)
+#### post hoc test for lmer test ####
+summary(glht(Plot_Weight_D_2020_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH"))
 
 # 2021 Dvac
 Plot_Weight_D_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
-summary(Plot_Weight_D_2021_Glmm)
 anova(Plot_Weight_D_2021_Glmm) #grazing treatment is significantly different 
-
+#### post hoc test for lmer test ####
+summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH"))
 
 
 #### Average by order across Grazing treatment ####
@@ -690,3 +692,5 @@ Orthoptera_Weight_D_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Blo
 summary(Orthoptera_Weight_D_2021_Glmm)
 anova(Orthoptera_Weight_D_2021_Glmm)
 
+####reorder bar graphs ####
+#FKANPP_dxg2021$realg <- factor(FKANPP_dxg2021$realg, levels = c("Destock", "Stable", "Heavy"))
