@@ -10,8 +10,6 @@ setwd("~/Library/CloudStorage/Box-Box/Projects/Dissertation/Data/Insect_Data")
 # Set Working Directory - PC
 setwd("C:/Users/kjbloodw/Box/Projects/Dissertation/Data/Insect_Data")
 
-#Load Tidyverse#
-library(tidyverse)
 #install.packages("scales")
 library(scales)
 library(vegan)
@@ -20,6 +18,8 @@ library(lmerTest)
 library(grid)
 #install.packages("multcomp")
 library(multcomp)
+#Load Tidyverse#
+library(tidyverse)
 
 
 #Set ggplot2 theme to black and white
@@ -194,7 +194,7 @@ Weight_Data_Official<-Weight_20 %>%
                              ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-4","dvac_2020_3_HG-44",
                              ifelse(Coll_Year_Bl_Trt_Pl=="dvac_2020_3_HG-5","dvac_2020_3_HG-45", 
                              Coll_Year_Bl_Trt_Pl)))))))))))))))))))))))))))))))))))))))))))))) %>% 
-  select(Coll_Year_Bl_Trt_Pl,Sample_Number,Correct_Order,Dry_Weight_g,Notes) %>% 
+  dplyr::select(Coll_Year_Bl_Trt_Pl,Sample_Number,Correct_Order,Dry_Weight_g,Notes) %>% 
   #RemovNAs from Dry weight
   filter(!is.na(Dry_Weight_g)) %>% 
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-")
@@ -254,6 +254,10 @@ Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>%
   summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n))
 
+##reorder bar graphs##
+
+Weight_by_Grazing_sweep$Grazing_Treatment <- factor(Weight_by_Grazing_sweep$Grazing_Treatment, levels = c("NG", "LG", "HG"))
+Weight_by_Grazing_dvac$Grazing_Treatment <- factor(Weight_by_Grazing_dvac$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 
 #### Total Plot Weight Differences - Figures ####
 
@@ -269,19 +273,14 @@ SN_2020_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Tr
   #Label the y-axis "Species Richness"
   ylab("Average Plot Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
-  #Make the y-axis extend to 50
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
   expand_limits(y=8)+
-  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.1, y=8, label="2020 Sweep Net",size=20)
-  #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-  #annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-  #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-  #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1500x1500
+  geom_text(x=1.0, y=8, label="2020 Sweepnet",size=20)
+#save at 1600 x 1200
 
 # 2021 - Sweepnet
 #Graph of Weights from Sweep Net by Grazing treatment- 2020
@@ -295,19 +294,16 @@ SN_2021_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2021),aes(x=Grazing_Tr
   #Label the y-axis "Species Richness"
   ylab("Average Plot Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+ 
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
   #Make the y-axis extend to 50
-  expand_limits(y=1)+
-  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  expand_limits(y=1.0)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.1, y=1, label="2021 Sweep Net",size=20)
-#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1500x1500
+  geom_text(x=1.0, y=1.0, label="2021 Sweepnet",size=20)
+#save at 1600 x 1200
+
 
 # 2020 - Dvac
 #Graph of Weights from Sweep Net by Grazing treatment- 2020
@@ -321,22 +317,22 @@ Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_T
   #Label the y-axis "Species Richness"
   ylab("Average Plot Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=0.4)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.1, y=0.4, label="2020 DVac",size=20)
-#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1500x1500
+  geom_text(x=0.85, y=0.4, label="2020 Dvac",size=20)+
+  ##LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
+annotate("text",x=1.03,y=0.19,label="a*",size=20)+ #no grazing
+annotate("text",x=2.03,y=0.38,label="b*",size=20)+ #low grazing
+annotate("text",x=3.03,y=0.22,label="a*",size=20) #high grazing
+#Save at the graph at 1600x1200
 
 # 2021 - Dvac
-#Graph of Weights from Sweep Net by Grazing treatment- 2020
+#Graph of Weights from dvac by Grazing treatment- 2021
 Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity",position = "dodge")+
@@ -347,18 +343,18 @@ Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_T
   #Label the y-axis "Species Richness"
   ylab("Average Plot Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Grazing","NG"="No Grazing","LG"="Low Grazing"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Grazing","No Grazing","Low Grazing"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none")+
   #Make the y-axis extend to 50
   expand_limits(y=0.15)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.1, y=0.15, label="2021 Dvac",size=20)
-#low grazing is different from high grazing, no grazing is different from high grazing -- change text below
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
+  geom_text(x=0.85, y=0.15, label="2021 Dvac",size=20)+
+##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
+annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
+  annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
+  annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
 #Save at the graph at 1500x1500
 
 ### Put all graphs together
@@ -371,29 +367,29 @@ print(SN_2021_Plot,vp=viewport(layout.pos.row=1, layout.pos.col =2))
 print(Dvac_2020_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =1))
 #print out the viewport plot where the Species_Richness_plot is at position 1,2
 print(Dvac_2021_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =2))
-#Save at 1800 x 1000 
+#Save at 3500 x 2000
 
 #### Glmm for Plot Weights by Grazing Treatment####
 
 # 2020 Sweep net
 Plot_Weight_S_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2020))
-anova(Plot_Weight_S_2020_Glmm)
+anova(Plot_Weight_S_2020_Glmm) #not significant
 
 # 2021 Sweep Net
 Plot_Weight_S_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
-anova(Plot_Weight_S_2021_Glmm)
+anova(Plot_Weight_S_2021_Glmm) #not significant
 
 # 2020 Dvac
 Plot_Weight_D_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
-anova(Plot_Weight_D_2020_Glmm)
+anova(Plot_Weight_D_2020_Glmm) #p=0.07139
 #### post hoc test for lmer test ####
-summary(glht(Plot_Weight_D_2020_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH"))
+summary(glht(Plot_Weight_D_2020_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
 
 # 2021 Dvac
 Plot_Weight_D_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
-anova(Plot_Weight_D_2021_Glmm) #grazing treatment is significantly different 
+anova(Plot_Weight_D_2021_Glmm) # p=0.01885
 #### post hoc test for lmer test ####
-summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH"))
+summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #LG-HG (p=0.0618), #NG-HG (p=0.0119), NG-LG (p=0.4006)
 
 
 #### Average by order across Grazing treatment ####
@@ -692,5 +688,3 @@ Orthoptera_Weight_D_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Blo
 summary(Orthoptera_Weight_D_2021_Glmm)
 anova(Orthoptera_Weight_D_2021_Glmm)
 
-####reorder bar graphs ####
-#FKANPP_dxg2021$realg <- factor(FKANPP_dxg2021$realg, levels = c("Destock", "Stable", "Heavy"))
