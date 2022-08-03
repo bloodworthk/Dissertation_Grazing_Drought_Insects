@@ -745,9 +745,8 @@ for(g in unique(BC_NMDS_S$group)){
                                               ,group=g))
 }
 
-
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+NMDS_Sweep<-ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
   geom_point(size=8, stroke = 2) +
   #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
@@ -759,21 +758,16 @@ ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype
   #change order of legend
   #Use different shapes 
   scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_color_manual(values=c("darkseagreen2","blue4","maroon4","thistle2","darkorange4","deepskyblue4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
   #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
-  #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
-  #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
-  #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
-  #annotate("text",x=0.30,y=-0.19,label="High Grazing",size=10, fontface="bold")+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Label the x-axis "NMDS1" and the y-axis "NMDS2"
   xlab("NMDS1")+
   ylab("NMDS2")+
   theme(text = element_text(size = 55),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
-#expand_limits(y=1)
-#export at 1500x1400
+  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet",size=20)
+#export at 2000 x 1800
 
 
 
@@ -816,7 +810,8 @@ for(g in unique(BC_NMDS_D$group)){
 
 
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+NMDS_Dvac<-ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
   geom_point(size=8, stroke = 2) +
   #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
@@ -828,20 +823,21 @@ ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=group,linetype
   #change order of legend
   #Use different shapes 
   scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_color_manual(values=c("darkseagreen2","blue4","maroon4","thistle2","darkorange4","deepskyblue4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
   #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
-  #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
-  #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
-  #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
-  #annotate("text",x=0.30,y=-0.19,label="High Grazing",size=10, fontface="bold")+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Label the x-axis "NMDS1" and the y-axis "NMDS2"
   xlab("NMDS1")+
   ylab("NMDS2")+
   theme(text = element_text(size = 55),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
-#expand_limits(y=1)
-#export at 1500x1400
+  annotate(geom="text", x=-2, y=0.8, label="Dvac",size=20)
+#export at 2000 x 1800
 
-
+### Put all graphs together
+pushViewport(viewport(layout=grid.layout(1,2)))
+#print out the viewport plot 
+print(NMDS_Sweep,vp=viewport(layout.pos.row=1, layout.pos.col =1))
+#print out the viewport plot 
+print(NMDS_Dvac,vp=viewport(layout.pos.row=1, layout.pos.col =2))
+#export at 4000 x 2000
