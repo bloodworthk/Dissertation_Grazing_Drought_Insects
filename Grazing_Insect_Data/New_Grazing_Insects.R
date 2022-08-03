@@ -516,7 +516,7 @@ Weight_Orthoptera<-Weight_Data_Official %>%
   filter(Correct_Order=="Orthoptera") %>% 
   separate(Coll_Year_Bl_Trt, c("Collection_Method","Year","Block","Grazing_Treatment"), "_") %>% 
   na.omit() %>% 
-  select(-Notes)
+  dplyr::select(-Notes)
 
 Weight_Orthoptera$Year=as.numeric(Weight_Orthoptera$Year)
 Weight_Orthoptera$Block=as.character(Weight_Orthoptera$Block)
@@ -524,7 +524,7 @@ Weight_Orthoptera$Plot=as.numeric(Weight_Orthoptera$Plot)
 
 ID_Orthoptera<-ID_Data_Official %>% 
   filter(Correct_Order=="Orthoptera") %>% 
-  select(-Notes)
+  dplyr::select(-Notes)
 
 Weight_Orthoptera_Official<-merge(Weight_Orthoptera, ID_Orthoptera, by=c("Collection_Method","Year","Block","Grazing_Treatment","Plot","Sample_Number","Correct_Order"),all=TRUE) %>% 
   #other issues for other plots in 2020 but ignoring for now and removing NAs
@@ -588,8 +588,6 @@ ggplot(subset(Weight_Orthoptera_Avg_S,Year==2020),aes(x=Grazing_Treatment,y=Aver
 #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
 #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
 #Save at the graph at 1400x1400
-
-
 
 #2021 - Sweepnet
 ggplot(subset(Weight_Orthoptera_Avg_S,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position="stack"))+
@@ -687,4 +685,163 @@ anova(Orthoptera_Weight_D_2020_Glmm)
 Orthoptera_Weight_D_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
 summary(Orthoptera_Weight_D_2021_Glmm)
 anova(Orthoptera_Weight_D_2021_Glmm)
+
+#### NMDS ####
+
+#Make a new data frame called Wide_Relative_Cover using data from Relative_Cover
+Wide_Order_Weight<-Weight_Data_Summed%>%
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Plot!="NA") %>% 
+  #Make a wide table using column correct order as overarching columns, fill with values from correct dry weight column, if there is no value for one cell, insert a zero
+  spread(key=Correct_Order,value=Dry_Weight_g, fill=0)
+
+#seperate out sweep net and dvac
+Wide_Order_Weight_S<-Wide_Order_Weight %>% 
+  filter(Collection_Method=="sweep")
+
+Wide_Order_Weight_D<-Wide_Order_Weight %>% 
+  filter(Collection_Method=="dvac")
+
+#### Make new data frame called BC_Data and run an NMDS 
+
+#sweepnet
+BC_Data_S <- metaMDS(Wide_Order_Weight_S[,6:13])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_S, Wide_Order_Weight_S, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
+sites <- 1:nrow(Wide_Order_Weight_S)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_S <- Wide_Order_Weight_S[,1:5] %>% 
+  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_S$points,col=as.factor(BC_Meta_Data_S$Trt_Year))
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_S,groups = as.factor(BC_Meta_Data_S$Trt_Year),kind = "sd",display = "sites", label = T)
+
+#Use the vegan ellipse function to make ellipses           
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_S = data.frame(MDS1 = BC_Data_S$points[,1], MDS2 = BC_Data_S$points[,2],group=BC_Meta_Data_S$Trt_Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_S <- cbind(BC_Meta_Data_S,BC_NMDS_S)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_S<-ordiellipse(BC_Data_S, BC_Meta_Data_S$Trt_Year, display = "sites",
+                               kind = "se", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_S <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_S$group)){
+  BC_Ellipses_S <- rbind(BC_Ellipses_S, cbind(as.data.frame(with(BC_NMDS_S[BC_NMDS_S$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_S[[g]]$cov,BC_Ord_Ellipses_S[[g]]$center,BC_Ord_Ellipses_S[[g]]$scale)))
+                                              ,group=g))
+}
+
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_S, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  #Use different shapes 
+  scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_color_manual(values=c("darkseagreen2","blue4","maroon4","thistle2","darkorange4","deepskyblue4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
+  #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
+  #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.30,y=-0.19,label="High Grazing",size=10, fontface="bold")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
+#expand_limits(y=1)
+#export at 1500x1400
+
+
+
+#dvac
+BC_Data_D <- metaMDS(Wide_Order_Weight_D[,6:13])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_D, Wide_Order_Weight_D, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
+sites <- 1:nrow(Wide_Order_Weight_D)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_D <- Wide_Order_Weight_D[,1:5] %>% 
+  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_D$points,col=as.factor(BC_Meta_Data_D$Trt_Year))
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_D,groups = as.factor(BC_Meta_Data_D$Trt_Year),kind = "sd",display = "sites", label = T)
+
+#Use the vegan ellipse function to make ellipses           
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_D = data.frame(MDS1 = BC_Data_D$points[,1], MDS2 = BC_Data_D$points[,2],group=BC_Meta_Data_D$Trt_Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_D <- cbind(BC_Meta_Data_D,BC_NMDS_D)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_D<-ordiellipse(BC_Data_D, BC_Meta_Data_D$Trt_Year, display = "sites",
+                               kind = "se", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_D <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_D$group)){
+  BC_Ellipses_D <- rbind(BC_Ellipses_D, cbind(as.data.frame(with(BC_NMDS_D[BC_NMDS_D$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_D[[g]]$cov,BC_Ord_Ellipses_D[[g]]$center,BC_Ord_Ellipses_D[[g]]$scale)))
+                                              ,group=g))
+}
+
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_D, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  #Use different shapes 
+  scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_color_manual(values=c("darkseagreen2","blue4","maroon4","thistle2","darkorange4","deepskyblue4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","dotted","solid","twodash","dotted"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="bottom")+
+  #Add annotations of K1B, 4B, and K4A inside the elipses and bold them
+  #annotate("text",x=-.16,y=0.27,label="No Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.04,y=-0.09,label="Low Grazing",size=10, fontface="bold")+
+  #annotate("text",x=0.30,y=-0.19,label="High Grazing",size=10, fontface="bold")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-1.63, y=0.8, label="d. 2020 Arthropods",size=20)
+#expand_limits(y=1)
+#export at 1500x1400
+
 
