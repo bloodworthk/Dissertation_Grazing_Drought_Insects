@@ -745,31 +745,6 @@ for(g in unique(BC_NMDS_S$group)){
                                               ,group=g))
 }
 
-#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-NMDS_Sweep<-ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
-  #make a point graph where the points are size 5.  Color them based on exlosure
-  geom_point(size=8, stroke = 2) +
-  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
-  geom_path(data = BC_Ellipses_S, aes(x=NMDS1, y=NMDS2), size=4)+
-  #make shape, color, and linetype in one combined legend instead of three legends
-  labs(color  = "", linetype = "", shape = "")+
-  # make legend 2 columns
-  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
-  #change order of legend
-  #Use different shapes 
-  scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
-  #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
-  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
-  xlab("NMDS1")+
-  ylab("NMDS2")+
-  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet",size=20)
-#export at 2000 x 1800
-
-
 
 #dvac
 BC_Data_D <- metaMDS(Wide_Order_Weight_D[,6:13])
@@ -808,6 +783,31 @@ for(g in unique(BC_NMDS_D$group)){
                                               ,group=g))
 }
 
+#### NMDS Figures ####
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+NMDS_Sweep<-ggplot(data = BC_NMDS_Graph_S, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_S, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  #Use different shapes 
+  scale_shape_manual(values=c(15,16,17,22,21,24),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021"),name="")+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet",size=20)
+#export at 2000 x 1800
 
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
@@ -841,3 +841,85 @@ print(NMDS_Sweep,vp=viewport(layout.pos.row=1, layout.pos.col =1))
 #print out the viewport plot 
 print(NMDS_Dvac,vp=viewport(layout.pos.row=1, layout.pos.col =2))
 #export at 4000 x 2000
+
+#### PERMANOVA ####
+
+##PerMANOVA
+
+#Sweepnet
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_S <- Wide_Order_Weight_S[,6:ncol(Wide_Order_Weight_S)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_S <- Wide_Order_Weight_S[,1:5]
+
+Environment_Matrix_S$Grazing_Treatment_Fact=as.factor(Environment_Matrix_S$Grazing_Treatment)
+Environment_Matrix_S$Block_Fact=as.numeric(Environment_Matrix_S$Block)
+Environment_Matrix_S$Plot_Fact=as.factor(Environment_Matrix_S$Plot)
+Environment_Matrix_S$Year_Fact=as.factor(Environment_Matrix_S$Year)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_S <- adonis2(formula = Species_Matrix_S~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_S,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_S) #grazing treatment (p=0.695), year (p=0.0.001), grazing:year (p=0.441)
+
+#Dvac
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_D <- Wide_Order_Weight_D[,6:ncol(Wide_Order_Weight_D)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_D <- Wide_Order_Weight_D[,1:5]
+
+Environment_Matrix_D$Grazing_Treatment_Fact=as.factor(Environment_Matrix_D$Grazing_Treatment)
+Environment_Matrix_D$Block_Fact=as.numeric(Environment_Matrix_D$Block)
+Environment_Matrix_D$Plot_Fact=as.factor(Environment_Matrix_D$Plot)
+Environment_Matrix_D$Year_Fact=as.factor(Environment_Matrix_D$Year)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_D <- adonis2(formula = Species_Matrix_D~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_D,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_D) #grazing treatment (p=0.026), year (p=0.001), grazing:year (p=0.005)
+
+
+#### PERMDISP ####
+
+#Make a new dataframe with data from Relative_Cover2
+Wide_Order_Weight2_S <- Weight_Data_Summed%>%
+  filter(Plot!="NA") %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Collection_Method=="sweep") %>% 
+  #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
+  spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
+
+#Make a new dataframe with data from Relative_Cover2
+Wide_Order_Weight2_D <- Weight_Data_Summed%>%
+  filter(Plot!="NA") %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Collection_Method=="dvac") %>% 
+  #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
+  spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
+
+
+#Sweepnet
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_S <- vegdist(Species_Matrix_S)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_S <- betadisper(BC_Distance_Matrix_S,Wide_Order_Weight2_S$Grazing_Treatment)
+permutest(Dispersion_Results_Grazing_S,pairwise = T, permutations = 999) #grazing treatments (p=0.95)
+
+#Dvac
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_D <- vegdist(Species_Matrix_D)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_D <- betadisper(BC_Distance_Matrix_D,Wide_Order_Weight2_D$Grazing_Treatment)
+permutest(Dispersion_Results_Grazing_D,pairwise = T, permutations = 999) #HG-NG (p=0.006), NG-LG (p=0.348), LG-HG (0.3474470), LG-NG (p=0.035)
+
+
