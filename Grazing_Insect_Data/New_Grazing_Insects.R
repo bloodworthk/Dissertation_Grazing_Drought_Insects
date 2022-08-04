@@ -879,6 +879,7 @@ Environment_Matrix_D$Year_Fact=as.factor(Environment_Matrix_D$Year)
 PerMANOVA2_D <- adonis2(formula = Species_Matrix_D~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_D,permutations = 999, method = "bray")
 #give a print out of the PermMANOVA
 print(PerMANOVA2_D) #grazing treatment (p=0.026), year (p=0.001), grazing:year (p=0.005)
+#no posthoc
 
 
 #### PERMDISP ####
@@ -907,7 +908,6 @@ Wide_Order_Weight2_D <- Weight_Data_Summed%>%
   #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
   spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
 
-
 #Sweepnet
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
 BC_Distance_Matrix_S <- vegdist(Species_Matrix_S)
@@ -920,6 +920,7 @@ permutest(Dispersion_Results_Grazing_S,pairwise = T, permutations = 999) #grazin
 BC_Distance_Matrix_D <- vegdist(Species_Matrix_D)
 #Run a dissimilarity matrix (PermDisp) comparing grazing treatment
 Dispersion_Results_Grazing_D <- betadisper(BC_Distance_Matrix_D,Wide_Order_Weight2_D$Grazing_Treatment)
-permutest(Dispersion_Results_Grazing_D,pairwise = T, permutations = 999) #HG-NG (p=0.006), NG-LG (p=0.348), LG-HG (0.3474470), LG-NG (p=0.035)
+anova(Dispersion_Results_Grazing_D)
+permutest(Dispersion_Results_Grazing_D,pairwise = T, permutations = 999) #using the permuted p-value above the diagnol HG-NG (p=0.004), NG-LG (p=0.044), LG-HG (0.35200)
 
 
