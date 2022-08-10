@@ -885,7 +885,7 @@ print(PerMANOVA2_D) #grazing treatment (p=0.026), year (p=0.001), grazing:year (
 #### PERMDISP ####
 
 #Make a new dataframe with data from Relative_Cover2
-Wide_Order_Weight2_S <- Weight_Data_Summed%>%
+Wide_Order_Weight2_S_2020 <- Weight_Data_Summed%>%
   filter(Plot!="NA") %>% 
   filter(Correct_Order!="Unknown_1") %>% 
   filter(Correct_Order!="Unknown") %>% 
@@ -893,11 +893,25 @@ Wide_Order_Weight2_S <- Weight_Data_Summed%>%
   filter(Correct_Order!="Snail") %>% 
   filter(Correct_Order!="Body_Parts") %>%
   filter(Collection_Method=="sweep") %>% 
+  filter(Year=="2020") %>% 
   #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
   spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
 
 #Make a new dataframe with data from Relative_Cover2
-Wide_Order_Weight2_D <- Weight_Data_Summed%>%
+Wide_Order_Weight2_S_2021 <- Weight_Data_Summed%>%
+  filter(Plot!="NA") %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Collection_Method=="sweep") %>% 
+  filter(Year=="2021") %>% 
+  #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
+  spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
+
+#Make a new dataframe with data from Relative_Cover2
+Wide_Order_Weight2_D_2020 <- Weight_Data_Summed%>%
   filter(Plot!="NA") %>% 
   filter(Correct_Order!="Unknown_1") %>% 
   filter(Correct_Order!="Unknown") %>% 
@@ -905,15 +919,35 @@ Wide_Order_Weight2_D <- Weight_Data_Summed%>%
   filter(Correct_Order!="Snail") %>% 
   filter(Correct_Order!="Body_Parts") %>%
   filter(Collection_Method=="dvac") %>% 
+  filter(Year=="2020") %>% 
+  #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
+  spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
+
+#Make a new dataframe with data from Relative_Cover2
+Wide_Order_Weight2_D_2021 <- Weight_Data_Summed%>%
+  filter(Plot!="NA") %>% 
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>%
+  filter(Collection_Method=="dvac") %>% 
+  filter(Year=="2021") %>% 
   #Make a qide data frame using "Taxa" as the columns and fill with "Relative_Cover", if there is no data, fill cell with zero
   spread(key = Correct_Order, value = Dry_Weight_g, fill = 0)
 
 #Sweepnet
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
-BC_Distance_Matrix_S <- vegdist(Species_Matrix_S)
+BC_Distance_Matrix_S_2020 <- vegdist(Species_Matrix_S)
 #Run a dissimilarity matrix (PermDisp) comparing grazing treatment
-Dispersion_Results_Grazing_S <- betadisper(BC_Distance_Matrix_S,Wide_Order_Weight2_S$Grazing_Treatment)
-permutest(Dispersion_Results_Grazing_S,pairwise = T, permutations = 999) #grazing treatments (p=0.95)
+Dispersion_Results_Grazing_S <- betadisper(BC_Distance_Matrix_S_2020,Wide_Order_Weight2_S_2020$Grazing_Treatment)
+permutest(Dispersion_Results_Grazing_S_2020,pairwise = T, permutations = 999) #grazing treatments (p=0.95)
+
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_S_2021 <- vegdist(Species_Matrix_S_2021)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_S_2020 <- betadisper(BC_Distance_Matrix_S_2020,Wide_Order_Weight2_S_2020$Grazing_Treatment)
+permutest(Dispersion_Results_Grazing_S_2020,pairwise = T, permutations = 999) #grazing treatments (p=0.95)
 
 #Dvac
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
