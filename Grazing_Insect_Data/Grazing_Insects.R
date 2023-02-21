@@ -263,7 +263,7 @@ Weight_Data_Summed_D<-Weight_Data_Summed %>%
   filter(Dataset=="D") %>% 
   filter(Correct_Order!="Unknown_1") %>% 
   filter(Correct_Order!="Unknown") %>% 
-  filter(Correct_Order!="Snail") 
+  filter(Correct_Order!="Sna il") 
 
 #### Anova comparing insect weights by grazing treatment for d-vac #### 
 #Weight_Data_D_AOV <- aov(Correct_Dry_Weight_g ~ Grazing_Treatment, data = Weight_Data_Summed_D) 
