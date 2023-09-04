@@ -20,6 +20,7 @@ library(grid)
 library(multcomp)
 #Load Tidyverse#
 library(tidyverse)
+library(patchwork)
 
 
 #Set ggplot2 theme to black and white
@@ -28,22 +29,44 @@ theme_set(theme_bw())
 theme_update(panel.grid.major=element_blank(),
              panel.grid.minor=element_blank())
 
-#### Load in data and make sure columns names are consistant ####
+#### Load in data and make sure columns names are consistent ####
 
 #ID Data
 ID_Data_20<-read.csv("2020_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
+  #make all collection methods the same across years
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method))) %>% 
-  rename(Sample_Number="Sample")
+  #rename sample column so that it's the same across years
+  rename(Sample_Number="Sample") %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes)
 
 ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
+  #make all collection methods the same across years
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method))) %>% 
-  rename(Sample_Number="Sample")
+  #rename sample column so that it's the same across years
+  rename(Sample_Number="Sample")%>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes) %>% 
+  #remove blanks from dataframe
+  filter(Collection_Method!="") %>% 
+  #fix "LG " to "LG"
+  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="LG ","LG",Grazing_Treatment))
+
+ID_Data_22<-read.csv("2022_Sweep_Net_D-Vac_Data_FK.csv",header=T) %>% 
+  #make all collection methods the same across years
+  mutate(Collection_Method=ifelse(Collection_Method=="Dvac","dvac",ifelse(Collection_Method=="Sweep_Net","sweep",Collection_Method))) %>% 
+  #rename sample column so that it's the same across years
+  rename(Sample_Number="Sample")%>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes)
+  
 
 #Weight Data
 Weight_Data_20<-read.csv("2020_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
   rename(Sample_Number=Sample_num) %>% 
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+
 Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+
+Weight_Data_22<-read.csv("2022_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
 
 #### Formatting and Cleaning ID Data ####
@@ -51,6 +74,7 @@ Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>%
 ID_20<-ID_Data_20 %>% 
   #Change block and grazing treatment to be consistent
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
+  mutate(Plot=replace_na(Plot,100)) %>% 
   #correct misspellings and inconsistencies in order data
   mutate(Correct_Order=ifelse(Order=="orthoptera","Orthoptera",ifelse(Order=="hemiptera","Hemiptera",ifelse(Order=="coleoptera","Coleoptera",ifelse(Order=="hymenoptera","Hymenoptera",ifelse(Order=="diptera","Diptera",ifelse(Order=="araneae","Araneae",Order))))))) %>% 
   #correct misspellings and inconsistencies in order data
@@ -59,13 +83,19 @@ ID_20<-ID_Data_20 %>%
   mutate(Correct_Species=ifelse(Species=="differentalis","differentialis",ifelse(Species=="sanguinipes","sanguinipes",ifelse(Species=="packardi","packardii",ifelse(Species=="unknown","sp",ifelse(Species=="pachardii","packardii",ifelse(Species=="sanguinpes","sanguinipes",Species))))))) %>% 
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Correct_Family,Correct_Genus,Correct_Species,Notes) %>% 
+  #remove all body part entries
+  filter(Notes!="Body Parts" & Notes!="Body Parts/Legs" & Notes!="Body parts" & Notes!="too smooshed to tell, put into body parts jar") %>% 
   #make sample # numeric instead of character 
-  mutate(Sample_Number=as.numeric(Sample_Number))###why are there na's? check data
+  mutate(Sample_Number=as.numeric(Sample_Number)) 
+  
+  
 
-#fix data entry errors - 2020 - Sweep Net check B3, NG,Plot 100 sample 17 - should be Phoetaliotes nebranscensis
-ID_20[1067, "Correct_Genus"] <- "Phoetaliotes"
-#fix data entry errors - 2020 - sweep net check B3, NG,Plot 100 sample 18 - should be melanoplus gladstoni
-ID_20[1115, "Correct_Genus"] <- "Melanoplus"
+#fix data entry errors - 2020 - Sweep Net check B3, NG, sample 17 - should be Phoetaliotes nebranscensis
+ID_20[1029, "Correct_Genus"] <- "Phoetaliotes"
+#fix data entry errors - 2020 - sweep net check B3, NG,sample 16 - says melanoplus deorum
+ID_20[1020, "Correct_Genus"] <- "" ####check data ####
+#sweep-2020-B3-NG - Plot 7 - says Melanoplus nebrascensis
+ID_20[939, "Correct_Genus"] <- ""####check data ####
 
 ID_21<-ID_Data_21 %>% 
   #Change block and grazing treatment to be consistent and match plot numbers
@@ -88,28 +118,36 @@ ID_21<-ID_Data_21 %>%
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Correct_Family,Correct_Genus,Correct_Species,Notes) %>% 
   mutate(Sample_Number=as.numeric(Sample_Number))
 
-#fix data entry errors - 2021 - Dvac check B2, HG,Plot 29 sample 2 - should be Ageneotettix deorum
-ID_21[261, "Correct_Species"] <- "deorum"
-#fix data entry errors - 2021 - Dvac check B1, HG,Plot 15 sample 5 -  should be Melanoplus brunri
-ID_21[283, "Correct_Species"] <- "bruneri"
+
+ID_22<-ID_Data_22 %>% 
+  #Change block and grazing treatment to be consistent and match plot numbers
+  mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
+  #correct misspellings and inconsistencies in order data
+  mutate(Correct_Order=ifelse(Order=="aranea","Araneae",
+                            ifelse(Order=="coleoptera","Coleoptera",
+                            ifelse(Order=="diptera","Diptera",
+                            ifelse(Order=="hemiptera","Hemiptera",
+                            ifelse(Order=="hymenoptera","Hymenoptera",
+                            ifelse(Order=="lepidoptera","Lepidoptera",
+                            ifelse(Order=="neuroptera","Neuroptera",
+                            ifelse(Order=="orthoptera","Orthoptera",
+                            ifelse(Order=="thysanoptera","Thysanoptera",
+                            ifelse(Order=="unknown","Unknown",Order))))))))))) %>% 
+  #correct misspellings and inconsistencies in order data
+  mutate(Correct_Family=ifelse(Family=="aphididae", "Aphididae",ifelse(Family=="asilidae", "Asilidae",ifelse(Family=="Ceraphionidae","Ceraphronidae",ifelse(Family=="chloropidae","Chloropidae",ifelse(Family=="Chrionomidae","Chironomidae",ifelse(Family=="chrysididae","Chrysididae",ifelse(Family=="Cicadellidea","Cicadellidae",ifelse(Family=="coccinellidae","Coccinellidae",ifelse(Family=="Coccinelliadae","Coccinellidae",ifelse(Family=="culicidae","Culicidae",ifelse(Family=="curculionidae","Curculionidae",ifelse(Family=="Diapriidea","Diapriidae",ifelse(Family=="Euiophidae","Eulophidae",ifelse(Family=="eupelmidae","Eupelmidae",ifelse(Family=="ichneumonidae","Ichneumonidae",ifelse(Family=="latridiidae","Latridiidae",ifelse(Family=="lycosidae","Lycosidae",ifelse(Family=="muscidae","Muscidae",ifelse(Family=="myrmeleontidae","Myrmeleontidae",ifelse(Family=="nabidae","Nabidae",ifelse(Family=="pentatomidae","Pentatomidae",ifelse(Family=="perilampidae","Perilampidae",ifelse(Family=="platygastridae","Platygastridae",ifelse(Family=="scarabaeidae","Scarabaeidae",ifelse(Family=="Scarabacidae","Scarabaeidae",ifelse(Family=="sepsidae","Sepsidae",ifelse(Family=="tomisidae","Thomisidae",ifelse(Family=="Thripinae","Thripidae",ifelse(Family=="Thrips","Thripidae",ifelse(Family=="Tiombiculidae","Trombiculidae",ifelse(Family=="tingidae","Tingidae",ifelse(Family=="trichoceridae","Trichoceridae",ifelse(Family=="Trichoceridea","Trichoceridae",ifelse(Family=="unknown","Unknown",ifelse(Family=="",NA,ifelse(Family=="N/A",NA,ifelse(Family=="n/a",NA,Family)))))))))))))))))))))))))))))))))))))) %>% 
+  mutate(Correct_Genus=ifelse(Genus=="ageneotettix","Ageneotettix",ifelse(Genus=="arphia","Arphia",ifelse(Genus=="melanoplus","Melanoplus",ifelse(Genus=="opeia","Opeia",ifelse(Genus=="dissosteira","Dissosteira",ifelse(Genus=="Dissosteria","Dissosteira" ,ifelse(Genus=="Eritcttix","Eritettix",ifelse(Genus=="eritettix","Eritettix",ifelse(Genus=="Erotettix","Eritettix",ifelse(Genus=="phoetaliotes","Phoetaliotes",ifelse(Genus=="unknown","Unknown",ifelse(Genus=="",NA,ifelse(Genus=="N/A",NA,ifelse(Genus=="n/a",NA,Genus))))))))))))))) %>% 
+  mutate(Correct_Species=ifelse(Species=="os","obscura",ifelse(Species=="pseudomietana","pseudonietana",ifelse(Species=="unknown","Unknown",ifelse(Species=="",NA,ifelse(Species=="N/A",NA,ifelse(Species=="n/a",NA,Species))))))) %>% 
+  #remove unnecessary columns and reoder
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Correct_Family,Correct_Genus,Correct_Species,Notes) %>% 
+  mutate(Sample_Number=as.numeric(Sample_Number))
 
 #Merge together data frames
 
 ID_Data_Official<-ID_20 %>% 
   rbind(ID_21) %>% 
+  rbind(ID_22) %>% 
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-"))
-
-#fix data entry errors 
-#dvac_2020_1_HG-13 - missing
-ID_Data_Official[2681,"Block"] <- 3
-ID_Data_Official[2682,"Block"] <- 3
-ID_Data_Official[2683,"Block"] <- 3
-ID_Data_Official[2684,"Block"] <- 3
-ID_Data_Official[2685,"Block"] <- 3
-ID_Data_Official[2686,"Block"] <- 3
-ID_Data_Official[2687,"Block"] <- 3
-ID_Data_Official[2688,"Block"] <- 3
 
 #### Formatting and Cleaning Weight Data ####
 
@@ -135,14 +173,22 @@ Weight_21<-Weight_Data_21 %>%
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
 
+Weight_22<-Weight_Data_22 %>%  
+  #change blocks to be numeric
+  mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>%
+  rename(Correct_Order=Order) %>% 
+  #remove unnecessary columns and reoder
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
+
 #Merge together data frames
 
 Weight_Data_Official<-Weight_20 %>% 
   rbind(Weight_21) %>% 
+  rbind(Weight_22) %>% 
   #replace plot # for sweepnet with 100 (so not confused with others)
   mutate(Plot=ifelse(Collection_Method=="sweep",100,Plot)) %>% 
   #replace any weight that is <0.0001 with 0.00001 %>% 
-  mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00005",Dry_Weight_g))) %>% 
+  mutate(Dry_Weight_g=as.numeric(ifelse(Dry_Weight_g=="<0.0001","0.00001",Dry_Weight_g))) %>% 
   #Create a column that merges together treatment data and year
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-")) %>% 
@@ -199,24 +245,6 @@ Weight_Data_Official<-Weight_20 %>%
   filter(!is.na(Dry_Weight_g)) %>% 
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-")
 
-#fix data entry errors 
-Weight_Data_Official[1703, "Dry_Weight_g"] <- 0.0140
-Weight_Data_Official[1614, "Plot"] <- 40
-Weight_Data_Official[45,"Plot"] <- 16
-Weight_Data_Official[1521,"Coll_Year_Bl_Trt"] <- "dvac_2021_2_NG"
-Weight_Data_Official[1528,"Coll_Year_Bl_Trt"] <- "dvac_2021_2_NG"
-Weight_Data_Official[1606,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1607,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1608,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1609,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1610,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1611,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1612,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1613,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1703,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1699,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_NG"
-Weight_Data_Official[1628,"Coll_Year_Bl_Trt"] <- "dvac_2021_3_LG"
-
 ####Total Plot Weight Differences ####
 
 #Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
@@ -237,11 +265,16 @@ Weight_Data_Summed_sweep<-Weight_Data_Summed %>%
 #create dataframe that just has dvac samples in it
 Weight_Data_Summed_dvac<-Weight_Data_Summed %>% 
   filter(Collection_Method=="dvac") %>% 
-  #sum by plot #
+  #wrong grazing treatment fixed
+  mutate(Grazing_Treatment=ifelse(Plot==20,"NG",ifelse(Plot==32,"NG",ifelse(Plot==35,"NG",ifelse(Plot==22,"LG",ifelse(Plot==36,"LG",Grazing_Treatment)))))) %>% 
+  #wrong block numbers fixed
+  mutate(Block=ifelse(Plot==32,"3",ifelse(Plot=="40",3,ifelse(Plot=="33","3",Block)))) %>% 
+  filter(Plot!="NA") %>% ####find why this NA exists ####
+  #sum by plot 
   group_by(Year,Block,Grazing_Treatment,Plot) %>% 
   summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
-  ungroup()
-
+  ungroup() 
+ 
 
 ### Average Plot Weight across Grazing treatment ####
 Weight_by_Grazing_sweep<-Weight_Data_Summed_sweep %>% 
@@ -283,7 +316,7 @@ SN_2020_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Tr
 #save at 1600 x 1200
 
 # 2021 - Sweepnet
-#Graph of Weights from Sweep Net by Grazing treatment- 2020
+#Graph of Weights from Sweep Net by Grazing treatment- 2021
 SN_2021_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity",position = "dodge")+
@@ -298,10 +331,32 @@ SN_2021_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2021),aes(x=Grazing_Tr
   scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
   theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
   #Make the y-axis extend to 50
-  expand_limits(y=1.0)+
+  expand_limits(y=1.2)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=1.0, label="2021 Sweepnet",size=20)
+  geom_text(x=1.0, y=1.2, label="2021 Sweepnet",size=20)
+#save at 1600 x 1200
+
+#2022 - Sweepnet
+#Graph of Weights from Sweep Net by Grazing treatment- 2022
+SN_2022_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=2.0)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=2.0, label="2022 Sweepnet",size=20)
 #save at 1600 x 1200
 
 
@@ -321,10 +376,10 @@ Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_T
   scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
-  expand_limits(y=0.4)+
+  expand_limits(y=0.5)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.4, label="2020 Dvac",size=20)+
+  geom_text(x=0.85, y=0.5, label="2020 Dvac",size=20)+
   ##LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
 annotate("text",x=1.03,y=0.19,label="a*",size=20)+ #no grazing
 annotate("text",x=2.03,y=0.38,label="b*",size=20)+ #low grazing
@@ -347,27 +402,51 @@ Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_T
   scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
   theme(axis.title.y=element_blank(),legend.position = "none")+
   #Make the y-axis extend to 50
-  expand_limits(y=0.15)+
+  expand_limits(y=0.2)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.15, label="2021 Dvac",size=20)+
+  geom_text(x=0.85, y=0.2, label="2021 Dvac",size=20)+
 ##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
 annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
   annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
   annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
 #Save at the graph at 1500x1500
 
-### Put all graphs together
-pushViewport(viewport(layout=grid.layout(2,2)))
-#print out the viewport plot where the Species_Richness_plot is at position 1,1
-print(SN_2020_Plot,vp=viewport(layout.pos.row=1, layout.pos.col =1))
-#print out the viewport plot where the Species_Richness_plot is at position 1,2
-print(SN_2021_Plot,vp=viewport(layout.pos.row=1, layout.pos.col =2))
-#print out the viewport plot where the Species_Richness_plot is at position 1,1
-print(Dvac_2020_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =1))
-#print out the viewport plot where the Species_Richness_plot is at position 1,2
-print(Dvac_2021_Plot,vp=viewport(layout.pos.row=2, layout.pos.col =2))
-#Save at 3500 x 2000
+# 2022 - Dvac
+#Graph of Weights from dvac by Grazing treatment- 2021
+Dvac_2022_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","NG"="Cattle Removal","LG"="Destock"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=0.1, label="2022 Dvac",size=20)
+  ##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
+  #annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
+  #annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
+  #annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+#### Create Average Plot Weight Figure ####
+SN_2020_Plot+
+  SN_2021_Plot+
+  SN_2022_Plot+
+  Dvac_2020_Plot+  
+  Dvac_2021_Plot+
+  Dvac_2022_Plot+
+  plot_layout(ncol = 3,nrow = 2)
+#Save at 2000x2000
 
 #### Glmm for Plot Weights by Grazing Treatment####
 
