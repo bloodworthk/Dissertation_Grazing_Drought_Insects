@@ -1,5 +1,5 @@
-#### Grazing x Insect Data - 2020 ####
-#### Code created by: Kathryn Bloodworth and Will Mann ####
+#### Grazing x Insect Data - 2020 #
+#### Code created by: Kathryn Bloodworth and Will Mann #
 #Date started: 06/14/2021 # adapted and restarted 07/13/2022
 
 #### Set working directory and load libraries ####
@@ -20,6 +20,7 @@ library(grid)
 library(multcomp)
 #Load Tidyverse#
 library(tidyverse)
+library(olsrr)
 library(patchwork)
 
 
@@ -29,7 +30,8 @@ theme_set(theme_bw())
 theme_update(panel.grid.major=element_blank(),
              panel.grid.minor=element_blank())
 
-#### Load in data and make sure columns names are consistent ####
+#### Load in data ####
+#make sure column names are consistent 
 
 #ID Data
 ID_Data_20<-read.csv("2020_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
@@ -379,11 +381,11 @@ Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_T
   expand_limits(y=0.5)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.5, label="2020 Dvac",size=20)+
+  geom_text(x=0.85, y=0.5, label="2020 Dvac",size=20)
   ##LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
-annotate("text",x=1.03,y=0.19,label="a*",size=20)+ #no grazing
-annotate("text",x=2.03,y=0.38,label="b*",size=20)+ #low grazing
-annotate("text",x=3.03,y=0.22,label="a*",size=20) #high grazing
+#annotate("text",x=1.03,y=0.19,label="a*",size=20)+ #no grazing
+#annotate("text",x=2.03,y=0.38,label="b*",size=20)+ #low grazing
+#annotate("text",x=3.03,y=0.22,label="a*",size=20) #high grazing
 #Save at the graph at 1600x1200
 
 # 2021 - Dvac
@@ -432,10 +434,6 @@ Dvac_2022_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2022),aes(x=Grazing_T
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=0.1, label="2022 Dvac",size=20)
-  ##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
-  #annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
-  #annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
-  #annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
 #Save at the graph at 1500x1500
 
 #### Create Average Plot Weight Figure ####
@@ -448,6 +446,38 @@ SN_2020_Plot+
   plot_layout(ncol = 3,nrow = 2)
 #Save at 2000x2000
 
+#### Normality: Plot Weights####
+
+# Sweep Net 2020
+SN_2020_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2020), Plot_Weight  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2020_Weight) 
+ols_test_normality(SN_2020_Weight) #normalish
+
+# Sweep Net 2021
+SN_2021_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2021), log(Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2021_Weight) 
+ols_test_normality(SN_2021_Weight) #normalish
+
+# Sweep Net 2022
+SN_2022_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2022), (Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2022_Weight) 
+ols_test_normality(SN_2022_Weight) #normal
+
+# Dvac 2020
+dvac_2020_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2020), sqrt(Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2020_Weight) 
+ols_test_normality(dvac_2020_Weight) #normalish
+
+# dvac 2021
+dvac_2021_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2021), log(Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2021_Weight) 
+ols_test_normality(dvac_2021_Weight) #normalish
+
+# dvac 2022
+dvac_2022_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2022), log(Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2022_Weight) 
+ols_test_normality(dvac_2022_Weight) #normal
+
 #### Glmm for Plot Weights by Grazing Treatment####
 
 # 2020 Sweep net
@@ -455,21 +485,26 @@ Plot_Weight_S_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , 
 anova(Plot_Weight_S_2020_Glmm) #not significant
 
 # 2021 Sweep Net
-Plot_Weight_S_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
+Plot_Weight_S_2021_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
 anova(Plot_Weight_S_2021_Glmm) #not significant
 
+# 2022 Sweep Net
+Plot_Weight_S_2022_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2022))
+anova(Plot_Weight_S_2022_Glmm) #not significant
+
 # 2020 Dvac
-Plot_Weight_D_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
-anova(Plot_Weight_D_2020_Glmm) #p=0.07139
-#### post hoc test for lmer test ####
-summary(glht(Plot_Weight_D_2020_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
+Plot_Weight_D_2020_Glmm <- lmer(sqrt(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
+anova(Plot_Weight_D_2020_Glmm) #not significant
 
 # 2021 Dvac
-Plot_Weight_D_2021_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
-anova(Plot_Weight_D_2021_Glmm) # p=0.01885
+Plot_Weight_D_2021_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
+anova(Plot_Weight_D_2021_Glmm) # p=0.002958
 #### post hoc test for lmer test ####
-summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #LG-HG (p=0.0618), #NG-HG (p=0.0119), NG-LG (p=0.4006)
+summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #LG-HG (p=0.00625), #NG-HG (0.00182), NG-LG (0.57352)
 
+# 2022 Dvac
+Plot_Weight_D_2022_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2022))
+anova(Plot_Weight_D_2022_Glmm) #not significant
 
 #### Average by order across Grazing treatment ####
 
