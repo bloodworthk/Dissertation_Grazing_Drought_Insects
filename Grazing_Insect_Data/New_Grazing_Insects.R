@@ -94,10 +94,10 @@ ID_20<-ID_Data_20 %>%
 
 #fix data entry errors - 2020 - Sweep Net check B3, NG, sample 17 - should be Phoetaliotes nebranscensis
 ID_20[1029, "Correct_Genus"] <- "Phoetaliotes"
-#fix data entry errors - 2020 - sweep net check B3, NG,sample 16 - says melanoplus deorum
-ID_20[1020, "Correct_Genus"] <- "" ####check data ####
-#sweep-2020-B3-NG - Plot 7 - says Melanoplus nebrascensis
-ID_20[939, "Correct_Genus"] <- ""####check data ####
+#fix data entry errors - 2020 - sweep net check B3, NG,sample 16 - should be Ageneotettix deorum
+ID_20[1020, "Correct_Genus"] <- "Ageneotettix" 
+#fix data entry errors - 2020 - sweep-2020-B3-NG - Sample 7 - should be Phoetaliotes nebranscensis
+ID_20[939, "Correct_Genus"] <- "Phoetaliotes"
 
 ID_21<-ID_Data_21 %>% 
   #Change block and grazing treatment to be consistent and match plot numbers
@@ -178,7 +178,7 @@ Weight_21<-Weight_Data_21 %>%
 Weight_22<-Weight_Data_22 %>%  
   #change blocks to be numeric
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>%
-  rename(Correct_Order=Order) %>% 
+  mutate(Correct_Order=ifelse(Order=="Trombicvlidae","Trombiculidae",Order)) %>% 
   #remove unnecessary columns and reoder
   dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Correct_Order,Dry_Weight_g,Notes)
 
@@ -271,7 +271,7 @@ Weight_Data_Summed_dvac<-Weight_Data_Summed %>%
   mutate(Grazing_Treatment=ifelse(Plot==20,"NG",ifelse(Plot==32,"NG",ifelse(Plot==35,"NG",ifelse(Plot==22,"LG",ifelse(Plot==36,"LG",Grazing_Treatment)))))) %>% 
   #wrong block numbers fixed
   mutate(Block=ifelse(Plot==32,"3",ifelse(Plot=="40",3,ifelse(Plot=="33","3",Block)))) %>% 
-  filter(Plot!="NA") %>% ####find why this NA exists ####
+  filter(Plot!="NA") %>% 
   #sum by plot 
   group_by(Year,Block,Grazing_Treatment,Plot) %>% 
   summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
@@ -382,11 +382,6 @@ Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_T
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=0.5, label="2020 Dvac",size=20)
-  ##LG-HG (p=0.0929), NG-HG (p=0.7386), NG-LG (p=0.0833)
-#annotate("text",x=1.03,y=0.19,label="a*",size=20)+ #no grazing
-#annotate("text",x=2.03,y=0.38,label="b*",size=20)+ #low grazing
-#annotate("text",x=3.03,y=0.22,label="a*",size=20) #high grazing
-#Save at the graph at 1600x1200
 
 # 2021 - Dvac
 #Graph of Weights from dvac by Grazing treatment- 2021
@@ -514,8 +509,10 @@ Weight_by_Order<-Weight_Data_Summed %>%
   summarise(Average_Weight=mean(Dry_Weight_g),Weight_SD=sd(Dry_Weight_g),Weight_n=length(Dry_Weight_g)) %>% 
   filter(Correct_Order!="Unknown_1") %>% 
   filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
   filter(Correct_Order!="Snail") %>% 
   filter(Correct_Order!="Body_Parts") %>% 
+  filter(Correct_Order!="Body Parts") %>% 
   ungroup()
 
 #Seperating out sweep net
@@ -527,9 +524,20 @@ Weight_by_Order_Dvac<-Weight_by_Order %>%
   filter(Collection_Method=="dvac")
 
 #### Total Plot Weight Differences by Order - Figures ####
+#Colors:
+#Aranea: #661100
+#Coleoptera: #CC6677
+#Diptera: #DDCC77
+#Hemiptera:#2D7947
+#Hymenoptera: #4B4084
+#Orthoptera:#76948F
+#Lepidoptera:#7E69A0
+#Neuroptera:#6B99C7
+#Thysanoptera:#7B4B4E
+#Trombiculidae:#BCB9EC
 
 #2020 - sweepnet
-ggplot(subset(Weight_by_Order_Sweepnet,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+SN_2020_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -538,22 +546,17 @@ ggplot(subset(Weight_by_Order_Sweepnet,Year==2020),aes(x=Grazing_Treatment,y=Ave
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Grazing","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#6B99C7","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
   expand_limits(y=6)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=6, label="2020 Sweep Net",size=20)
-  #no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-  #annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-  #annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-  #annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1400x1400
+  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank())+
+  geom_text(x=1.1, y=6, label="2020 Sweep Net",size=20)
 
 #2021 - sweepnet
-ggplot(subset(Weight_by_Order_Sweepnet,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+SN_2021_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -562,22 +565,17 @@ ggplot(subset(Weight_by_Order_Sweepnet,Year==2021),aes(x=Grazing_Treatment,y=Ave
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Grazing","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Orthoptera"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
-  expand_limits(y=1)+
+  expand_limits(y=0.6)+
   scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=1, label="2021 Sweep Net",size=20)
-#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1400x1400
+  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank(),axis.title.y=element_blank())+
+  geom_text(x=1.1, y=0.6, label="2021 Sweep Net",size=20)
 
-#2020 - dvac
-ggplot(subset(Weight_by_Order_Dvac,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+#2022 - sweepnet
+SN_2022_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -586,22 +584,36 @@ ggplot(subset(Weight_by_Order_Dvac,Year==2020),aes(x=Grazing_Treatment,y=Average
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Grazing","LG"="Low Grazing","NG"="No Grazing"))+
+ scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
+  #Make the y-axis extend to 50
+  expand_limits(y=1.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank(),axis.title.y=element_blank())+
+  geom_text(x=1.1, y=1.5, label="2022 Sweep Net",size=20)
+
+#2020 - dvac
+Dvac_2020_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=0.3)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=0.3, label="2020 Dvac",size=20)
-#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1400x1400
+  theme(text = element_text(size = 55),legend.position = "NONE")+
+  geom_text(x=1.1, y=0.3, label="2020 Dvac",size=20)
 
 #2021 - Dvac
-ggplot(subset(Weight_by_Order_Dvac,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+Dvac_2021_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
   geom_bar(stat="identity")+
   #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
@@ -610,19 +622,46 @@ ggplot(subset(Weight_by_Order_Dvac,Year==2021),aes(x=Grazing_Treatment,y=Average
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99","#AA4499","#6699CC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Grazing","LG"="Low Grazing","NG"="No Grazing"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
   expand_limits(y=0.1)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.3, y=0.1, label="2021 Dvac",size=20)
-#no grazing is different than low grazing, low grazing is different than high grazing, no and high grazing are the same
-#annotate("text",x=1,y=2.9,label="a",size=20)+ #no grazing
-#annotate("text",x=2,y=5.5,label="b",size=20)+ #low grazing
-#annotate("text",x=3,y=3.4,label="a",size=20) #high grazing
-#Save at the graph at 1400x1400
+  theme(text = element_text(size = 55),legend.position = "NONE",axis.title.y=element_blank())+
+  geom_text(x=1.1, y=0.1, label="2021 Dvac",size=20)
+
+#2022 - Dvac
+Dvac_2022_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","	
+Trombiculidae"), name = "Order")+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.08)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.position = "NONE",axis.title.y=element_blank())+
+  geom_text(x=1.1, y=0.08, label="2021 Dvac",size=20)
+
+
+#### Create Average Plot Weight Figure ####
+SN_2020_Order+
+  SN_2021_Order+
+  SN_2022_Order+
+  Dvac_2020_Order+  
+  Dvac_2021_Order+
+  Dvac_2022_Order+
+  plot_layout(ncol = 3,nrow = 2)
+#Save at 4500x3000
+
 
 #### Changes in Orthoptera genra by grazing treatment ####
 
@@ -644,9 +683,6 @@ Weight_Orthoptera_Official<-merge(Weight_Orthoptera, ID_Orthoptera, by=c("Collec
   #other issues for other plots in 2020 but ignoring for now and removing NAs
   na.omit() %>% 
   filter(Correct_Family=="Acrididae")
-#dvac 2020 plot 4 has weight data missing
-#dvac 2020 plot 13 is completely missing for ID data
-#dvac 2020 plot 44 - ID data missing?
 
 #make dataframe with sum of each genus of orthoptera summed by plot
 Weight_Orthoptera_Summed <- Weight_Orthoptera_Official %>% 
