@@ -22,7 +22,7 @@ library(multcomp)
 library(tidyverse)
 library(olsrr)
 library(patchwork)
-
+library(codyn)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -886,7 +886,7 @@ dvac_2022_Weight_Orthoptera <- lm(data = subset(Weight_Orthoptera_Summed_D, Year
 ols_plot_resid_hist(dvac_2022_Weight_Orthoptera) 
 ols_test_normality(dvac_2022_Weight_Orthoptera) #normal
 
-#### Glmm for Plot Weights by Grazing Treatment####
+#### Glmm for Plot Weights by Grazing Treatment Orthoptera####
 
 # 2020 Sweep net
 Plot_Weight_S_2020_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
@@ -914,28 +914,656 @@ summary(glht(Plot_Weight_D_2021_Glmm_Orthoptera, linfct = mcp(Grazing_Treatment 
 Plot_Weight_D_2022_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_D,Year==2022))
 anova(Plot_Weight_D_2022_Glmm_Orthoptera) #not significant
 
+#### Calculate Community Metrics ####
+# uses codyn package and finds shannon's diversity 
+Abundance<-ID_Data_Official %>% 
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
+  mutate(Abundance=length(Sample_Number))
 
-#### Glmm for Orthoptera Weights by Grazing Treatment####
+#Sweep Net Diversity
+Diversity <- community_diversity(df = Abundance,
+                                           time.var = "Year",
+                                           replicate.var = c("Collection_Method","Plot","Block","Grazing_Treatment"),
+                                           abundance.var = "Abundance")
+#Sweep Net Community Structure
+Structure <- community_structure(df = Abundance,
+                                 time.var = "Year",
+                                 replicate.var = c("Collection_Method","Plot","Block","Grazing_Treatment"),
+                                 abundance.var = "Abundance",
+                                    metric = "Evar")
+
+#Make a new data frame from "Extra_Species_Identity" to generate richness values for each research area
+Order_Richness<-ID_Data_Official %>%  
+  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
+  unique() %>% 
+  #group data frame by Watershed and exclosure
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot) %>%
+  #Make a new column named "Richness" and add the unique number of rows in the column "taxa" according to the groupings
+  summarise(richness=length(Correct_Order)) %>%
+  #stop grouping by watershed and exclosure
+  ungroup()
+
+#join the datasets
+CommunityMetrics <- Diversity %>%
+  full_join(Structure) %>% 
+  select(-richness) %>% 
+  full_join(Order_Richness)
+  
+#make dataframe with averages
+CommunityMetrics_Avg<-CommunityMetrics  %>% 
+  group_by(Collection_Method,Year,Grazing_Treatment) %>%
+  summarize(Richness_Std=sd(richness),Richness_Mean=mean(richness),Richness_n=length(richness),
+            Shannon_Std=sd(Shannon),Shannon_Mean=mean(Shannon),Shannon_n=length(Shannon),
+            Evar_Std=sd(Evar),Evar_Mean=mean(Evar),Evar_n=length(Evar))%>%
+  mutate(Richness_St_Error=Richness_Std/sqrt(Richness_n),
+         Shannon_St_Error=Shannon_Std/sqrt(Shannon_n),
+         Evar_St_Error=Evar_Std/sqrt(Evar_n)) %>% 
+  ungroup()
+
+#### Plot Richness ####
+
+# 2020 - Sweepnet
+Richness_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Order Richness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=10, label="2020 Sweepnet",size=20)
+#save at 1600 x 1200
+
+# 2021 - Sweepnet
+Richness_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=10, label="2021 Sweepnet",size=20)
+#save at 1600 x 1200
+
+#2022 - Sweepnet
+Richness_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=10, label="2022 Sweepnet",size=20)
+#save at 1600 x 1200
+
+
+# 2020 - Dvac
+Richness_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Order Richness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=10, label="2020 Dvac",size=20)
+
+# 2021 - Dvac
+#Graph of Weights from dvac by Grazing treatment- 2021
+Richness_2021_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Richness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=10, label="2021 Dvac",size=20)
+  ##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
+ # annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
+  #annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
+  #annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+# 2022 - Dvac
+Richness_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Richness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=10)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=10, label="2022 Dvac",size=20)
+#Save at the graph at 1500x1500
+
+#### Create Order Richness Figure ####
+Richness_2020_SN+
+  Richness_2021_SN+
+  Richness_2022_SN+
+  Richness_2020_Dvac+  
+  Richness_2021_Dvac+
+  Richness_2022_Dvac+
+  plot_layout(ncol = 3,nrow = 2)
+#Save at 4000x3000
+
+
+#### Normality: Order Richness ####
+
+# Sweep Net 2020
+SN_2020_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), log1p(richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2020_OrderRichness) 
+ols_test_normality(SN_2020_OrderRichness) #not great
+
+# Sweep Net 2021
+SN_2021_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2021_OrderRichness) 
+ols_test_normality(SN_2021_OrderRichness) #normalish
+
+# Sweep Net 2022
+SN_2022_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2022_OrderRichness) 
+ols_test_normality(SN_2022_OrderRichness) #normalish
+
+# Dvac 2020
+dvac_2020_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),log(richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2020_OrderRichness) 
+ols_test_normality(dvac_2020_OrderRichness) #normalish
+
+# dvac 2021
+dvac_2021_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="dvac"),(richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2021_OrderRichness) 
+ols_test_normality(dvac_2021_OrderRichness) #normalish
+
+# dvac 2022
+dvac_2022_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="dvac"), (richness)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2022_OrderRichness) 
+ols_test_normality(dvac_2022_OrderRichness) #normal
+
+#### Glmm for Plot Weights by Grazing Treatment Orthoptera####
 
 # 2020 Sweep net
-Orthoptera_Weight_S_2020_Glmm <- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
-summary(Orthoptera_Weight_S_2020_Glmm)
-anova(Orthoptera_Weight_S_2020_Glmm)
+OrderRichness_S_2020_Glmm <- lmer(log1p(richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
+anova(OrderRichness_S_2020_Glmm) #not significant
 
 # 2021 Sweep Net
-Orthoptera_Weight_S_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
-summary(Orthoptera_Weight_S_2021_Glmm)
-anova(Orthoptera_Weight_S_2021_Glmm)
+OrderRichness_S_2021_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
+anova(OrderRichness_S_2021_Glmm) #not significant
+
+# 2022 Sweep Net
+OrderRichness_S_2022_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
+anova(OrderRichness_S_2022_Glmm) #not significant
 
 # 2020 Dvac
-Orthoptera_Weight_D_2020_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
-summary(Orthoptera_Weight_D_2020_Glmm)
-anova(Orthoptera_Weight_D_2020_Glmm)
+OrderRichness_D_2020_Glmm <- lmer(log(richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
+anova(OrderRichness_D_2020_Glmm) #not significant
 
 # 2021 Dvac
-Orthoptera_Weight_D_2021_Glmm<- lmer(Genus_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
-summary(Orthoptera_Weight_D_2021_Glmm)
-anova(Orthoptera_Weight_D_2021_Glmm)
+OrderRichness_D_2021_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="dvac"))
+anova(OrderRichness_D_2021_Glmm) #not significant 
+
+# 2022 Dvac
+OrderRichness_D_2022_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="dvac"))
+anova(OrderRichness_D_2022_Glmm) #not significant
+
+
+#### Plot Shannon ####
+
+# 2020 - Sweepnet
+Shannon_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=8, label="2020 Sweepnet",size=20)
+#save at 1600 x 1200
+
+# 2021 - Sweepnet
+Shannon_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=8, label="2021 Sweepnet",size=20)
+#save at 1600 x 1200
+
+#2022 - Sweepnet
+Shannon_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=8, label="2022 Sweepnet",size=20)
+#save at 1600 x 1200
+
+
+# 2020 - Dvac
+Shannon_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=8, label="2020 Dvac",size=20)
+
+# 2021 - Dvac
+#Graph of Weights from dvac by Grazing treatment- 2021
+Shannon_2021_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=8, label="2021 Dvac",size=20)
+##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
+# annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
+#annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
+#annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
+#Save at the graph at 1500x1500
+
+# 2022 - Dvac
+Shannon_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=8)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=8, label="2022 Dvac",size=20)
+#Save at the graph at 1500x1500
+
+#### Create Order Shannon Figure ####
+Shannon_2020_SN+
+  Shannon_2021_SN+
+  Shannon_2022_SN+
+  Shannon_2020_Dvac+  
+  Shannon_2021_Dvac+
+  Shannon_2022_Dvac+
+  plot_layout(ncol = 3,nrow = 2)
+#Save at 4000x3000
+
+
+#### Normality: Order Shannon ####
+
+# Sweep Net 2020
+SN_2020_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), (Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2020_OrderShannon) 
+ols_test_normality(SN_2020_OrderShannon) #normalish
+
+# Sweep Net 2021
+SN_2021_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2021_OrderShannon) 
+ols_test_normality(SN_2021_OrderShannon) #normalish
+
+# Sweep Net 2022
+SN_2022_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2022_OrderShannon) 
+ols_test_normality(SN_2022_OrderShannon) #normalish
+
+# Dvac 2020
+dvac_2020_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),(Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2020_OrderShannon) 
+ols_test_normality(dvac_2020_OrderShannon) #normalish
+
+# dvac 2021
+dvac_2021_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="dvac"),(Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2021_OrderShannon) 
+ols_test_normality(dvac_2021_OrderShannon) #normalish
+
+# dvac 2022
+dvac_2022_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="dvac"), (Shannon)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2022_OrderShannon) 
+ols_test_normality(dvac_2022_OrderShannon) #normal
+
+#### Glmm for Plot Weights by Grazing Treatment Orthoptera####
+
+# 2020 Sweep net
+OrderShannon_S_2020_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
+anova(OrderShannon_S_2020_Glmm) #not significant
+
+# 2021 Sweep Net
+OrderShannon_S_2021_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
+anova(OrderShannon_S_2021_Glmm) #not significant
+
+# 2022 Sweep Net
+OrderShannon_S_2022_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
+anova(OrderShannon_S_2022_Glmm) #0.02115
+
+# 2020 Dvac
+OrderShannon_D_2020_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
+anova(OrderShannon_D_2020_Glmm) #not significant
+
+# 2021 Dvac
+OrderShannon_D_2021_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="dvac"))
+anova(OrderShannon_D_2021_Glmm) #0.03554 
+
+# 2022 Dvac
+OrderShannon_D_2022_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="dvac"))
+anova(OrderShannon_D_2022_Glmm) #0.01073
+
+
+#### Plot Evar ####
+
+# 2020 - Sweepnet
+Evar_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=1, label="2020 Sweepnet",size=20)
+#save at 1600 x 1200
+
+# 2021 - Sweepnet
+Evar_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=1, label="2021 Sweepnet",size=20)
+#save at 1600 x 1200
+
+#2022 - Sweepnet
+Evar_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=1.0, y=1, label="2022 Sweepnet",size=20)
+#save at 1600 x 1200
+
+
+# 2020 - Dvac
+Evar_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=1, label="2020 Dvac",size=20)
+
+# 2021 - Dvac
+#Graph of Weights from dvac by Grazing treatment- 2021
+Evar_2021_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=1, label="2021 Dvac",size=20)
+
+# 2022 - Dvac
+Evar_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none",axis.text.y=element_blank())+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=1, label="2022 Dvac",size=20)
+#Save at the graph at 1500x1500
+
+#### Create Order Evar Figure ####
+Evar_2020_SN+
+  Evar_2021_SN+
+  Evar_2022_SN+
+  Evar_2020_Dvac+  
+  Evar_2021_Dvac+
+  Evar_2022_Dvac+
+  plot_layout(ncol = 3,nrow = 2)
+#Save at 4000x3000
+
+
+#### Normality: Order Evar ####
+
+# Sweep Net 2020
+SN_2020_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), (Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2020_OrderEvar) 
+ols_test_normality(SN_2020_OrderEvar) #normalish
+
+# Sweep Net 2021
+SN_2021_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2021_OrderEvar) 
+ols_test_normality(SN_2021_OrderEvar) #normalish
+
+# Sweep Net 2022
+SN_2022_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(SN_2022_OrderEvar) 
+ols_test_normality(SN_2022_OrderEvar) #normalish
+
+# Dvac 2020
+dvac_2020_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),(Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2020_OrderEvar) 
+ols_test_normality(dvac_2020_OrderEvar) #normalish
+
+# dvac 2021
+dvac_2021_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="dvac"),(Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2021_OrderEvar) 
+ols_test_normality(dvac_2021_OrderEvar) #normalish
+
+# dvac 2022
+dvac_2022_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="dvac"), (Evar)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2022_OrderEvar) 
+ols_test_normality(dvac_2022_OrderEvar) #normal
+
+#### Glmm for Plot Weights by Grazing Treatment Orthoptera####
+
+# 2020 Sweep net
+OrderEvar_S_2020_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
+anova(OrderEvar_S_2020_Glmm) #not significant
+
+# 2021 Sweep Net
+OrderEvar_S_2021_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
+anova(OrderEvar_S_2021_Glmm) #not significant
+
+# 2022 Sweep Net
+OrderEvar_S_2022_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
+anova(OrderEvar_S_2022_Glmm) #0.02115
+
+# 2020 Dvac
+OrderEvar_D_2020_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
+anova(OrderEvar_D_2020_Glmm) #not significant
+
+# 2021 Dvac
+OrderEvar_D_2021_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="dvac"))
+anova(OrderEvar_D_2021_Glmm) #0.03554 
+
+# 2022 Dvac
+OrderEvar_D_2022_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="dvac"))
+anova(OrderEvar_D_2022_Glmm) #0.01073
+
+
+
+
+
 
 #### NMDS ####
 
