@@ -911,7 +911,8 @@ anova(Plot_Weight_D_2022_Glmm_Orthoptera) #not significant
 # uses codyn package and finds shannon's diversity 
 Abundance<-ID_Data_Official %>% 
   group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
-  mutate(Abundance=length(Sample_Number))
+  mutate(Abundance=length(Sample_Number)) %>% 
+  ungroup() 
 
 #Sweep Net Diversity
 Diversity <- community_diversity(df = Abundance,
@@ -1557,10 +1558,9 @@ summary(glht(OrderEvar_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), 
 OrderEvar_D_2022_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="dvac"))
 anova(OrderEvar_D_2022_Glmm) #not significant
 
-#### NMDS ####
+#### NMDS: By Order####
 
-#### Bray Curtis ####
-
+#### Bray Curtis: By Order ####
 #Create wide relative cover dataframe
 #Change row 54 and 55 where we don't cant equate sample number to weight to be unique sample number so it can be used here
 Abundance[54, "Sample_Number"] <- 10
@@ -1636,13 +1636,6 @@ plot(BC_Data_D$points,col=as.factor(BC_Meta_Data_D$Trt_Year))
 #make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
 ordiellipse(BC_Data_D,groups = as.factor(BC_Meta_Data_D$Trt_Year),kind = "sd",display = "sites", label = T)
 
-#Use the vegan ellipse function to make ellipses           
-veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
-{
-  theta <- (0:npoints) * 2 * pi/npoints
-  Circle <- cbind(cos(theta), sin(theta))
-  t(center + scale * t(Circle %*% chol(cov)))
-}
 #Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
 BC_NMDS_D = data.frame(MDS1 = BC_Data_D$points[,1], MDS2 = BC_Data_D$points[,2],group=BC_Meta_Data_D$Trt_Year)
 #Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
@@ -1658,7 +1651,7 @@ for(g in unique(BC_NMDS_D$group)){
                                               ,group=g))
 }
 
-#### NMDS Figures ####
+#### NMDS Figures: By Order ####
 
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 NMDS_Sweep<-ggplot(data = subset(BC_NMDS_Graph_S), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
@@ -1706,12 +1699,12 @@ NMDS_Dvac<-ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=gro
   annotate(geom="text", x=-2, y=0.8, label="Dvac",size=20)
 #export at 2000 x 1800
 
-#### Create NMDS ####
+#### Create NMDS: By Order ####
 NMDS_Sweep+
   NMDS_Dvac+
   plot_layout(ncol = 1,nrow = 2)
 #Save at 4000x3000
-#### PERMANOVA ####
+#### PERMANOVA: By Order ####
 
 ##PerMANOVA
 
@@ -1762,7 +1755,7 @@ Posthoc_D_Grazing_Year<-pairwise.adonis(Species_Matrix_D,factors=Environment_Mat
 Posthoc_D_Grazing_Year #Significant: HG-NG (2021)
 
 
-#### PERMDISP ####
+#### PERMDISP: By Order ####
 
 #seperate out sweep net and dvac
 Abundance_Wide_S_dispr<-Abundance_Wide_S %>% 
@@ -1785,4 +1778,221 @@ BC_Distance_Matrix_D <- vegdist(Species_Matrix_D)
 Dispersion_Results_Grazing_D <- betadisper(BC_Distance_Matrix_D,Abundance_Wide_D_dispr$Gr_Yr)
 permutest(Dispersion_Results_Grazing_D,pairwise = T, permutations = 999) 
 
+#### NMDS: Orthoptera Genus ####
+
+Abundance_OrthopteraGenus<-ID_Data_Official %>% 
+  filter(Correct_Family=="Acrididae") %>% 
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Genus) %>% 
+  mutate(Abundance=length(Sample_Number)) %>% 
+  ungroup() 
+
+#### Bray Curtis: Orthoptera Genus  ####
+
+#Create wide relative cover dataframe
+
+Abundance_Wide_OrthopteraGenus<-Abundance_OrthopteraGenus %>%
+  dplyr::select(-c(Correct_Order,Correct_Family, Correct_Species,Notes,Coll_Year_Bl_Trt,Coll_Year_Bl_Trt_Pl,Sample_Number)) %>% 
+  unique() %>% 
+  spread(key=Correct_Genus,value=Abundance, fill=0) %>% 
+  select(-c("<NA>"))
+
+#seperate out sweep net and dvac
+Abundance_Wide_S_OrthopteraGenus<-Abundance_Wide_OrthopteraGenus %>% 
+  filter(Collection_Method=="sweep")
+
+Abundance_Wide_D__OrthopteraGenus<-Abundance_Wide_OrthopteraGenus %>% 
+  filter(Collection_Method=="dvac") %>% 
+  mutate(Treatment=paste(Year,Plot,sep=".")) %>% 
+  #remove plot 29 because it had no grasshoppers
+  filter(Treatment!=2022.29) %>% 
+  select(-Treatment)
+
+#### Make new data frame called BC_Data and run an NMDS 
+
+#sweepnet
+BC_Data_S_OrthopteraGenus <- metaMDS(Abundance_Wide_S_OrthopteraGenus[,6:15])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_S_OrthopteraGenus, Abundance_Wide_S_OrthopteraGenus, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
+sites <- 1:nrow(Abundance_Wide_S_OrthopteraGenus)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,1:5] %>% 
+  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_S_OrthopteraGenus$points,col=as.factor(BC_Meta_Data_S_OrthopteraGenus$Trt_Year))
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_S_OrthopteraGenus,groups = as.factor(BC_Meta_Data_S_OrthopteraGenus$Trt_Year),kind = "sd",display = "sites", label = T)
+
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_S_OrthopteraGenus = data.frame(MDS1 = BC_Data_S_OrthopteraGenus$points[,1], MDS2 = BC_Data_S_OrthopteraGenus$points[,2],group=BC_Meta_Data_S_OrthopteraGenus$Trt_Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_S_OrthopteraGenus <- cbind(BC_Meta_Data_S_OrthopteraGenus,BC_NMDS_S_OrthopteraGenus)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_S_OrthopteraGenus<-ordiellipse(BC_Data_S_OrthopteraGenus, BC_Meta_Data_S_OrthopteraGenus$Trt_Year, display = "sites",
+                               kind = "se", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_S_OrthopteraGenus <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_S_OrthopteraGenus$group)){
+  BC_Ellipses_S_OrthopteraGenus <- rbind(BC_Ellipses_S_OrthopteraGenus, cbind(as.data.frame(with(BC_NMDS_S_OrthopteraGenus[BC_NMDS_S_OrthopteraGenus$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$cov,BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$center,BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$scale)))
+                                              ,group=g))
+}
+
+
+#dvac
+BC_Data_D__OrthopteraGenus <- metaMDS(Abundance_Wide_D__OrthopteraGenus[,6:15])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_D__OrthopteraGenus, Abundance_Wide_D__OrthopteraGenus, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
+sites <- 1:nrow(Abundance_Wide_D__OrthopteraGenus)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_D__OrthopteraGenus <- Abundance_Wide_D__OrthopteraGenus[,1:5] %>% 
+  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_D__OrthopteraGenus$points,col=as.factor(BC_Meta_Data_D__OrthopteraGenus$Trt_Year))
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_D__OrthopteraGenus,groups = as.factor(BC_Meta_Data_D__OrthopteraGenus$Trt_Year),kind = "sd",display = "sites", label = T)
+
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_D__OrthopteraGenus = data.frame(MDS1 = BC_Data_D__OrthopteraGenus$points[,1], MDS2 = BC_Data_D__OrthopteraGenus$points[,2],group=BC_Meta_Data_D__OrthopteraGenus$Trt_Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_D__OrthopteraGenus <- cbind(BC_Meta_Data_D__OrthopteraGenus,BC_NMDS_D__OrthopteraGenus)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_D__OrthopteraGenus<-ordiellipse(BC_Data_D__OrthopteraGenus, BC_Meta_Data_D__OrthopteraGenus$Trt_Year, display = "sites",
+                               kind = "se", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_D__OrthopteraGenus <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_D__OrthopteraGenus$group)){
+  BC_Ellipses_D__OrthopteraGenus <- rbind(BC_Ellipses_D__OrthopteraGenus, cbind(as.data.frame(with(BC_NMDS_D__OrthopteraGenus[BC_NMDS_D__OrthopteraGenus$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_D__OrthopteraGenus[[g]]$cov,BC_Ord_Ellipses_D__OrthopteraGenus[[g]]$center,BC_Ord_Ellipses_D__OrthopteraGenus[[g]]$scale)))
+                                              ,group=g))
+}
+
+#### NMDS Figures: Orthoptera Genus  ####
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+NMDS_Sweep_OrthopteraGenus<-ggplot(data = subset(BC_NMDS_Graph_S_OrthopteraGenus), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_S_OrthopteraGenus, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  scale_shape_manual(values=c(15,16,17,22,21,24,21,15,17),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4","red","yellow","blue"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash","solid","solid","solid"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet 2020",size=20)
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+NMDS_Dvac_OrthopteraGenus<-ggplot(data = BC_NMDS_Graph_D__OrthopteraGenus, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_D__OrthopteraGenus, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #change order of legend
+  #Use different shapes 
+  scale_shape_manual(values=c(15,16,17,22,21,24,21,15,17),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4","red","yellow","blue"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash","solid","solid","solid"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
+  annotate(geom="text", x=-2, y=0.8, label="Dvac",size=20)
+
+#### Create NMDS: Orthoptera Genus  ####
+NMDS_Sweep_OrthopteraGenus+
+  NMDS_Dvac_OrthopteraGenus+
+  plot_layout(ncol = 1,nrow = 2)
+
+#Save at 4000x3000
+#### PERMANOVA: Orthoptera Genus  ####
+
+##PerMANOVA
+
+#Sweepnet
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,6:ncol(Abundance_Wide_S_OrthopteraGenus)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,1:5]
+
+Environment_Matrix_S_OrthopteraGenus$Grazing_Treatment_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Grazing_Treatment)
+Environment_Matrix_S_OrthopteraGenus$Block_Fact=as.numeric(Environment_Matrix_S_OrthopteraGenus$Block)
+Environment_Matrix_S_OrthopteraGenus$Plot_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Plot)
+Environment_Matrix_S_OrthopteraGenus$Year_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Year)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_S_OrthopteraGenus <- adonis2(formula = Species_Matrix_S_OrthopteraGenus~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_S_OrthopteraGenus,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_S_OrthopteraGenus) #Grazing (NS), Year (0.001), GxYear (NS)
+#pairwise test
+Posthoc_S_OrthopteraGenus_Year<-pairwise.adonis(Species_Matrix_S_OrthopteraGenus,factors=Environment_Matrix_S_OrthopteraGenus$Year, p.adjust.m = "BH")
+Posthoc_S_OrthopteraGenus_Year   #2020-2021 (0.001), 2021-2022 (0.001), 2020-2022 (0.001)
+
+#Dvac
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_D__OrthopteraGenus <- Abundance_Wide_D__OrthopteraGenus[,6:ncol(Abundance_Wide_D__OrthopteraGenus)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_D__OrthopteraGenus <- Abundance_Wide_D__OrthopteraGenus[,1:5] %>% 
+  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
+
+Environment_Matrix_D__OrthopteraGenus$Grazing_Treatment_Fact=as.factor(Environment_Matrix_D__OrthopteraGenus$Grazing_Treatment)
+Environment_Matrix_D__OrthopteraGenus$Block_Fact=as.numeric(Environment_Matrix_D__OrthopteraGenus$Block)
+Environment_Matrix_D__OrthopteraGenus$Plot_Fact=as.factor(Environment_Matrix_D__OrthopteraGenus$Plot)
+Environment_Matrix_D__OrthopteraGenus$Year_Fact=as.factor(Environment_Matrix_D__OrthopteraGenus$Year)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_D__OrthopteraGenus <- adonis2(formula = Species_Matrix_D__OrthopteraGenus~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_D__OrthopteraGenus,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_D__OrthopteraGenus)  #Grazing (0.0187), Year (0.001), GxYear (NS)
+#pairwise test
+Posthoc_D__OrthopteraGenus_Year<-pairwise.adonis(Species_Matrix_D__OrthopteraGenus,factors=Environment_Matrix_D__OrthopteraGenus$Year, p.adjust.m = "BH")
+Posthoc_D__OrthopteraGenus_Year   #2020-2021 (0.001), 2021-2022 (0.001), 2020-2022 (0.001)
+#pairwise test
+Posthoc_D__OrthopteraGenus_Grazing<-pairwise.adonis(Species_Matrix_D__OrthopteraGenus,factors=Environment_Matrix_D__OrthopteraGenus$Grazing_Treatment, p.adjust.m = "BH")
+Posthoc_D__OrthopteraGenus_Grazing #NS
+
+
+#### PERMDISP: Orthoptera Genus  ####
+
+#seperate out sweep net and dvac
+Abundance_Wide_S_OrthopteraGenus_dispr<-Abundance_Wide_S_OrthopteraGenus %>% 
+  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
+
+Abundance_Wide_D__OrthopteraGenus_dispr<-Abundance_Wide_D__OrthopteraGenus %>% 
+  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
+
+#Sweepnet
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_S_OrthopteraGenus <- vegdist(Species_Matrix_S_OrthopteraGenus)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_S_OrthopteraGenus <- betadisper(BC_Distance_Matrix_S_OrthopteraGenus,Abundance_Wide_S_OrthopteraGenus_dispr$Gr_Yr)
+permutest(Dispersion_Results_Grazing_S_OrthopteraGenus,pairwise = T, permutations = 999) 
+
+#Dvac
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_D__OrthopteraGenus <- vegdist(Species_Matrix_D__OrthopteraGenus)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_D__OrthopteraGenus <- betadisper(BC_Distance_Matrix_D__OrthopteraGenus,Abundance_Wide_D__OrthopteraGenus_dispr$Gr_Yr)
+permutest(Dispersion_Results_Grazing_D__OrthopteraGenus,pairwise = T, permutations = 999) 
+#
 
