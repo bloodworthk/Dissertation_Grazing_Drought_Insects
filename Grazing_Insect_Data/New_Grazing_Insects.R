@@ -257,7 +257,7 @@ Weight_Data_Official<-Weight_20 %>%
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-") 
 
 
-#### Abundance By Weight ####
+#### Arthropod Abundance (Weight): Plot Level ####
 
 #Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
 Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, data=Weight_Data_Official, FUN=sum, na.rm=FALSE) 
@@ -274,19 +274,83 @@ Weight_Data_Summed_dvac<-Weight_Data_Summed %>%
   group_by(Year,Block,Grazing_Treatment,Plot) %>% 
   summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
   ungroup() 
- 
-### Average Abudnance across Grazing treatment ####
+
 Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>% 
   group_by(Year,Grazing_Treatment) %>% 
   summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
-  ungroup()
+  ungroup()%>% 
+  mutate(Correct_Order="Plot")
+
+### Order Abundance (Weight): Plot Level ###
+Weight_by_Order_Dvac<-Weight_Data_Summed %>%  
+  filter(Correct_Order!="Unknown_1") %>% 
+  filter(Correct_Order!="Unknown") %>% 
+  filter(Correct_Order!="unknown") %>% 
+  filter(Correct_Order!="Snail") %>% 
+  filter(Correct_Order!="Body_Parts") %>% 
+  filter(Correct_Order!="Body Parts") %>% 
+  filter(Plot!="NA") %>% 
+  spread(key=Correct_Order,value=Dry_Weight_g, fill=0) %>% 
+  gather(key="Correct_Order","Dry_Weight_g",6:15) %>% 
+  group_by(Collection_Method,Year, Grazing_Treatment, Correct_Order) %>% 
+  summarise(Average_Weight=mean(Dry_Weight_g),Weight_SD=sd(Dry_Weight_g),Weight_n=length(Dry_Weight_g)) %>%
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup() %>% 
+  #make a new column with new name for calculation below
+  mutate(Orthoptera_Order_Weight=Average_Weight)
+
+### Merge together Weight_by_Grazing_dvac and Weight_by_Order_Dvac to make dataframe for graph with total weight average across plots stacked with amount of that weight that is orthoptera
+#Create a new dataframe for plot weight - grasshopper weight for graph below
+Weight_Plot_Minus_Orthoptera <-Weight_by_Order_Dvac %>% 
+  #only want grasshopper abundance
+  filter(Correct_Order=="Orthoptera") %>% 
+  select(Year,Grazing_Treatment,Orthoptera_Order_Weight) %>% 
+  left_join(Weight_by_Grazing_dvac) %>% 
+  mutate(NonOrtho_Plot_Weight=Average_Weight-Orthoptera_Order_Weight) %>% 
+  select(Year,Grazing_Treatment,Correct_Order,NonOrtho_Plot_Weight,Weight_SD,Weight_n,Weight_St_Error) %>% 
+  rename(Average_Weight=NonOrtho_Plot_Weight) 
+
+Weight_Total_Order<-Weight_by_Order_Dvac %>% 
+  select(Year,Grazing_Treatment,Correct_Order,Average_Weight,Weight_SD,Weight_n,Weight_St_Error) %>% 
+  filter(Correct_Order=="Orthoptera") %>% 
+  rbind(Weight_Plot_Minus_Orthoptera) 
+
+install.packages("ggpattern")
+library(ggpattern)
+
+
+ggplot(subset(Weight_Total_Order,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE))+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  #geom_errorbar(data=subset(Weight_Total_Order,Correct_Order=="Plot"),aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                  'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=0.5, label="2020 Weight",size=20)
+
+ 
+### Average Abundance (Count) plot level####
 
 Abundance_by_Grazing_Avg<-Abundance_Plot %>% 
   group_by(Year,Grazing_Treatment) %>%
   summarise(Average_Plot_Abundance=mean(Plot_Abundance),Plot_Abundance_SD=sd(Plot_Abundance),Plot_Abundance_n=length(Plot_Abundance)) %>% 
   mutate(Plot_Abundance_St_Error=Plot_Abundance_SD/sqrt(Plot_Abundance_n)) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(Correct_Order="Plot")
+
 
 
 ##reorder bar graphs##
@@ -499,19 +563,7 @@ anova(Count_2022_Glmm) #0.0119
 ###post hoc test for lmer test ##
 summary(glht(Count_2022_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.06767, #LG-HG (0.00568), NG-HG (0.27006)
 
-#### Average by order across Grazing treatment ####
 
-#Averaging
-Weight_by_Order_Dvac<-Weight_Data_Summed %>%  
-  filter(Correct_Order!="Unknown_1") %>% 
-  filter(Correct_Order!="Unknown") %>% 
-  filter(Correct_Order!="unknown") %>% 
-  filter(Correct_Order!="Snail") %>% 
-  filter(Correct_Order!="Body_Parts") %>% 
-  filter(Correct_Order!="Body Parts") %>% 
-  group_by(Collection_Method,Year, Grazing_Treatment, Correct_Order) %>% 
-  summarise(Average_Weight=mean(Dry_Weight_g),Weight_SD=sd(Dry_Weight_g),Weight_n=length(Dry_Weight_g)) %>% 
-  ungroup() 
 
 #### Total Plot Weight Differences by Order - Figures ####
 #Colors:
@@ -536,7 +588,7 @@ Dvac_2020_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2020),aes(x=Grazing_Tr
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -555,7 +607,7 @@ Dvac_2021_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2021),aes(x=Grazing_Tr
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
@@ -574,8 +626,7 @@ Dvac_2022_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2022),aes(x=Grazing_Tr
   #Label the y-axis "Species Richness"
   ylab("Average Weight (g)")+
   theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","	
-Trombiculidae"), name = "Order")+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
   #Make the y-axis extend to 50
