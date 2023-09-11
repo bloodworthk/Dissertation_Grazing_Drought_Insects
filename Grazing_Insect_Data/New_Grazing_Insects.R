@@ -40,7 +40,8 @@ ID_Data_20<-read.csv("2020_Sweep_Net_Dvac_Data_FK.csv",header=T) %>%
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method))) %>% 
   #rename sample column so that it's the same across years
   rename(Sample_Number="Sample") %>% 
-  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes)
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes) %>% 
+  filter(Collection_Method=="dvac")
 
 ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T) %>% 
   #make all collection methods the same across years
@@ -51,33 +52,37 @@ ID_Data_21<-read.csv("2021_Sweep_Net_Dvac_Data_FK.csv",header=T) %>%
   #remove blanks from dataframe
   filter(Collection_Method!="") %>% 
   #fix "LG " to "LG"
-  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="LG ","LG",Grazing_Treatment))
+  mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="LG ","LG",Grazing_Treatment))%>% 
+  filter(Collection_Method=="dvac")
 
 ID_Data_22<-read.csv("2022_Sweep_Net_D-Vac_Data_FK.csv",header=T) %>% 
   #make all collection methods the same across years
   mutate(Collection_Method=ifelse(Collection_Method=="Dvac","dvac",ifelse(Collection_Method=="Sweep_Net","sweep",Collection_Method))) %>% 
   #rename sample column so that it's the same across years
   rename(Sample_Number="Sample")%>% 
-  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes)
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Sample_Number,Order,Family,Genus,Species,Notes)%>% 
+  filter(Collection_Method=="dvac")
   
 
 #Weight Data
 Weight_Data_20<-read.csv("2020_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
   rename(Sample_Number=Sample_num) %>% 
-  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))%>% 
+  filter(Collection_Method=="dvac")
 
 Weight_Data_21<-read.csv("2021_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
-  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))%>% 
+  filter(Collection_Method=="dvac")
 
 Weight_Data_22<-read.csv("2022_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>% 
-  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))
+  mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))%>% 
+  filter(Collection_Method=="dvac")
 
 #### Formatting and Cleaning ID Data ####
 
 ID_20<-ID_Data_20 %>% 
   #Change block and grazing treatment to be consistent
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
-  mutate(Plot=replace_na(Plot,100)) %>% 
   #correct misspellings and inconsistencies in order data
   mutate(Correct_Order=ifelse(Order=="orthoptera","Orthoptera",ifelse(Order=="hemiptera","Hemiptera",ifelse(Order=="coleoptera","Coleoptera",ifelse(Order=="hymenoptera","Hymenoptera",ifelse(Order=="diptera","Diptera",ifelse(Order=="araneae","Araneae",Order))))))) %>% 
   #correct misspellings and inconsistencies in order data
@@ -90,22 +95,10 @@ ID_20<-ID_Data_20 %>%
   filter(Notes!="Body Parts" & Notes!="Body Parts/Legs" & Notes!="Body parts" & Notes!="too smooshed to tell, put into body parts jar") %>% 
   #make sample # numeric instead of character 
   mutate(Sample_Number=as.numeric(Sample_Number)) 
-  
-  
-
-#fix data entry errors - 2020 - Sweep Net check B3, NG, sample 17 - should be Phoetaliotes nebranscensis
-ID_20[1029, "Correct_Genus"] <- "Phoetaliotes"
-#fix data entry errors - 2020 - sweep net check B3, NG,sample 16 - should be Ageneotettix deorum
-ID_20[1020, "Correct_Genus"] <- "Ageneotettix" 
-#fix data entry errors - 2020 - sweep-2020-B3-NG - Sample 7 - should be Phoetaliotes nebranscensis
-ID_20[939, "Correct_Genus"] <- "Phoetaliotes"
 
 ID_21<-ID_Data_21 %>% 
   #Change block and grazing treatment to be consistent and match plot numbers
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>% 
-  #adding plot#1 for all sweepnet plots - making it plot 100 so that i can differentiate in if else statements below
-  mutate(Plot=replace_na(Plot,100)) %>% 
-  #Remove extra 100s placed by previous code
   filter(!is.na(Year)) %>% 
   #fix block numbers
   mutate(Block=ifelse(Plot<=15,1,ifelse(Plot==16,2,ifelse(Plot==17,2,ifelse(Plot==18,2,ifelse(Plot==19,2,ifelse(Plot==20,2,ifelse(Plot==21,2,ifelse(Plot==22,2,ifelse(Plot==23,2,ifelse(Plot==24,2,ifelse(Plot==25,2,ifelse(Plot==26,2,ifelse(Plot==27,2,ifelse(Plot==28,2,ifelse(Plot==29,2,ifelse(Plot==30,2,ifelse(Plot==31,3,ifelse(Plot==32,3,ifelse(Plot==33,3,ifelse(Plot==34,3,ifelse(Plot==35,3,ifelse(Plot==36,3,ifelse(Plot==37,3,ifelse(Plot==38,3,ifelse(Plot==39,3,ifelse(Plot==40,3,ifelse(Plot==41,3,ifelse(Plot==43,3,ifelse(Plot==43,3,ifelse(Plot==44,3,ifelse(Plot==45,3,Block))))))))))))))))))))))))))))))))%>% 
@@ -125,7 +118,6 @@ ID_21<-ID_Data_21 %>%
 ID_22<-ID_Data_22 %>% 
   #Change block and grazing treatment to be consistent and match plot numbers
   mutate(Block=ifelse(Block=="B1",1,ifelse(Block=="B2",2,ifelse(Block=="B3",3,Block)))) %>%
-  mutate(Plot=ifelse(Collection_Method=="sweep",100,Plot)) %>% 
   #correct misspellings and inconsistencies in order data
   mutate(Correct_Order=ifelse(Order=="araneae","Araneae",
                             ifelse(Order=="coleoptera","Coleoptera",
@@ -189,8 +181,6 @@ Weight_22<-Weight_Data_22 %>%
 Weight_Data_Official<-Weight_20 %>% 
   rbind(Weight_21) %>% 
   rbind(Weight_22) %>% 
-  #replace plot # for sweepnet with 100 (so not confused with others)
-  mutate(Plot=ifelse(Collection_Method=="sweep",100,Plot)) %>% 
   #wrong grazing treatment fixed
   mutate(Grazing_Treatment=ifelse(Plot==35,"NG",Grazing_Treatment)) %>% 
   #wrong block numbers fixed
@@ -253,6 +243,13 @@ Weight_Data_Official<-Weight_20 %>%
   filter(!is.na(Dry_Weight_g)) %>% 
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-") 
 
+#### Abundance by Count ####
+Abundance<-ID_Data_Official %>% 
+group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
+  mutate(Abundance=length(Sample_Number)) %>% 
+  ungroup() 
+
+
 ####Total Plot Weight Differences ####
 
 #Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
@@ -261,14 +258,6 @@ Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, 
 #Separating out Treatment_Plot into all distinctions again so that we can group based on different things
 Weight_Data_Summed<-Weight_Data_Summed %>% 
   separate(Coll_Year_Bl_Trt, c("Collection_Method","Year","Block","Grazing_Treatment"), "_")
-
-#create dataframe that just has sweepnet samples in it
-Weight_Data_Summed_sweep<-Weight_Data_Summed %>% 
-  filter(Collection_Method=="sweep") %>% 
-  #sum by plot #
-  group_by(Year,Block,Grazing_Treatment,Plot) %>% 
-  summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
-  ungroup()
 
 #create dataframe that just has dvac samples in it
 Weight_Data_Summed_dvac<-Weight_Data_Summed %>% 
@@ -281,85 +270,15 @@ Weight_Data_Summed_dvac<-Weight_Data_Summed %>%
  
 
 ### Average Plot Weight across Grazing treatment ####
-Weight_by_Grazing_sweep<-Weight_Data_Summed_sweep %>% 
-  group_by(Year,Grazing_Treatment) %>% 
-  summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
-  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) 
-
 Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>% 
   group_by(Year,Grazing_Treatment) %>% 
   summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n))
 
 ##reorder bar graphs##
-
-Weight_by_Grazing_sweep$Grazing_Treatment <- factor(Weight_by_Grazing_sweep$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 Weight_by_Grazing_dvac$Grazing_Treatment <- factor(Weight_by_Grazing_dvac$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 
 #### Total Plot Weight Differences - Figures ####
-
-# 2020 - Sweepnet
-#Graph of Weights from Sweep Net by Grazing treatment- 2020
-SN_2020_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  expand_limits(y=8)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=8, label="2020 Sweepnet",size=20)
-
-# 2021 - Sweepnet
-#Graph of Weights from Sweep Net by Grazing treatment- 2021
-SN_2021_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+ 
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  #Make the y-axis extend to 50
-  expand_limits(y=1.2)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=1.2, label="2021 Sweepnet",size=20)
-
-#2022 - Sweepnet
-#Graph of Weights from Sweep Net by Grazing treatment- 2022
-SN_2022_Plot<-ggplot(subset(Weight_by_Grazing_sweep,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  #Make the y-axis extend to 50
-  expand_limits(y=2.0)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=2.0, label="2022 Sweepnet",size=20)
-
 
 # 2020 - Dvac
 #Graph of Weights from Sweep Net by Grazing treatment- 2020
@@ -425,41 +344,22 @@ Dvac_2022_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2022),aes(x=Grazing_T
   geom_text(x=0.85, y=0.1, label="2022 Dvac",size=20)
 
 #### Create Average Plot Weight Figure ####
-SN_2020_Plot+
-  SN_2021_Plot+
-  SN_2022_Plot+
   Dvac_2020_Plot+  
   Dvac_2021_Plot+
   Dvac_2022_Plot+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4500x3000
 
 #### Normality: Plot Weights####
-
-# Sweep Net 2020
-SN_2020_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2020), Plot_Weight  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2020_Weight) 
-ols_test_normality(SN_2020_Weight) #normalish
-
-# Sweep Net 2021
-SN_2021_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2021), log(Plot_Weight)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2021_Weight) 
-ols_test_normality(SN_2021_Weight) #normalish
-
-# Sweep Net 2022
-SN_2022_Weight <- lm(data = subset(Weight_Data_Summed_sweep, Year == 2022), (Plot_Weight)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2022_Weight) 
-ols_test_normality(SN_2022_Weight) #normal
-
 # Dvac 2020
 dvac_2020_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2020), sqrt(Plot_Weight)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2020_Weight) 
-ols_test_normality(dvac_2020_Weight) #normalish
+ols_test_normality(dvac_2020_Weight) #normal
 
 # dvac 2021
 dvac_2021_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2021), log(Plot_Weight)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2021_Weight) 
-ols_test_normality(dvac_2021_Weight) #normalish
+ols_test_normality(dvac_2021_Weight) #normal
 
 # dvac 2022
 dvac_2022_Weight <- lm(data = subset(Weight_Data_Summed_dvac, Year == 2022), log(Plot_Weight)  ~ Grazing_Treatment)
@@ -467,19 +367,6 @@ ols_plot_resid_hist(dvac_2022_Weight)
 ols_test_normality(dvac_2022_Weight) #normal
 
 #### Glmm for Plot Weights by Grazing Treatment####
-
-# 2020 Sweep net
-Plot_Weight_S_2020_Glmm <- lmer(Plot_Weight ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2020))
-anova(Plot_Weight_S_2020_Glmm) #not significant
-
-# 2021 Sweep Net
-Plot_Weight_S_2021_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2021))
-anova(Plot_Weight_S_2021_Glmm) #not significant
-
-# 2022 Sweep Net
-Plot_Weight_S_2022_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_sweep,Year==2022))
-anova(Plot_Weight_S_2022_Glmm) #not significant
-
 # 2020 Dvac
 Plot_Weight_D_2020_Glmm <- lmer(sqrt(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2020))
 anova(Plot_Weight_D_2020_Glmm) #not significant
@@ -497,7 +384,7 @@ anova(Plot_Weight_D_2022_Glmm) #not significant
 #### Average by order across Grazing treatment ####
 
 #Averaging
-Weight_by_Order<-Weight_Data_Summed %>%  
+Weight_by_Order_Dvac<-Weight_Data_Summed %>%  
   filter(Correct_Order!="Unknown_1") %>% 
   filter(Correct_Order!="Unknown") %>% 
   filter(Correct_Order!="unknown") %>% 
@@ -507,15 +394,6 @@ Weight_by_Order<-Weight_Data_Summed %>%
   group_by(Collection_Method,Year, Grazing_Treatment, Correct_Order) %>% 
   summarise(Average_Weight=mean(Dry_Weight_g),Weight_SD=sd(Dry_Weight_g),Weight_n=length(Dry_Weight_g)) %>% 
   ungroup() 
-  
-
-#Seperating out sweep net
-Weight_by_Order_Sweepnet<-Weight_by_Order %>% 
-  filter(Collection_Method=="sweep")
-
-#Seperating out dvac
-Weight_by_Order_Dvac<-Weight_by_Order %>% 
-  filter(Collection_Method=="dvac")
 
 #### Total Plot Weight Differences by Order - Figures ####
 #Colors:
@@ -529,63 +407,6 @@ Weight_by_Order_Dvac<-Weight_by_Order %>%
 #Neuroptera:#6B99C7
 #Thysanoptera:#7B4B4E
 #Trombiculidae:#BCB9EC
-
-#2020 - sweepnet
-SN_2020_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#6B99C7","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Neuroptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=6)+
-  scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank())+
-  geom_text(x=1.1, y=6, label="2020 Sweep Net",size=20)
-
-#2021 - sweepnet
-SN_2021_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Orthoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.6)+
-  scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank(),axis.title.y=element_blank())+
-  geom_text(x=1.1, y=0.6, label="2021 Sweep Net",size=20)
-
-#2022 - sweepnet
-SN_2022_Order<-ggplot(subset(Weight_by_Order_Sweepnet,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
- scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera"), name = "Order")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=1.5)+
-  scale_y_continuous(labels = label_number(accuracy = 0.1))+
-  theme(text = element_text(size = 55),legend.position = "NONE", axis.text.x=element_blank(), axis.title.x=element_blank(),axis.title.y=element_blank())+
-  geom_text(x=1.1, y=1.5, label="2022 Sweep Net",size=20)
 
 #2020 - dvac
 Dvac_2020_Order<-ggplot(subset(Weight_by_Order_Dvac,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Order, position="stack"))+
@@ -647,13 +468,10 @@ Trombiculidae"), name = "Order")+
 
 
 #### Create Average Plot Weight Figure ####
-SN_2020_Order+
-  SN_2021_Order+
-  SN_2022_Order+
   Dvac_2020_Order+  
   Dvac_2021_Order+
   Dvac_2022_Order+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4500x3000
 
 
@@ -679,36 +497,19 @@ Weight_Orthoptera_Official<-merge(Weight_Orthoptera, ID_Orthoptera, by=c("Collec
   filter(Correct_Family=="Acrididae")
 
 #make dataframe with sum of each genus of orthoptera summed by plot
-Weight_Orthoptera_Summed <- Weight_Orthoptera_Official %>% 
+Weight_Orthoptera_Summed_D <- Weight_Orthoptera_Official %>% 
   group_by(Collection_Method, Year, Block, Grazing_Treatment,Plot,Correct_Genus) %>% 
   summarise(Genus_Weight=sum(Dry_Weight_g)) %>% 
   ungroup()
 
-Weight_Orthoptera_Summed_S<-Weight_Orthoptera_Summed %>% 
-  filter(Collection_Method=="sweep")
-
-Weight_Orthoptera_Summed_D<-Weight_Orthoptera_Summed %>% 
-  filter(Collection_Method=="dvac")
-
 #Sweepnet
 #make table a graph looking at differences in genus weight by grazing treatment
-Weight_Orthoptera_Avg_S<-Weight_Orthoptera_Summed %>% 
-  filter(Collection_Method=="sweep") %>% 
+Weight_Orthoptera_Avg_D<-Weight_Orthoptera_Summed_D %>% 
   group_by(Year,Grazing_Treatment,Correct_Genus) %>% 
   summarise(Average_Weight=mean(Genus_Weight),Weight_SD=sd(Genus_Weight),Weight_n=length(Genus_Weight)) %>% 
   #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
   mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
   ungroup()
-
-Weight_Orthoptera_Avg_D<-Weight_Orthoptera_Summed %>% 
-  filter(Collection_Method=="dvac") %>% 
-  group_by(Year,Grazing_Treatment,Correct_Genus) %>% 
-  summarise(Average_Weight=mean(Genus_Weight),Weight_SD=sd(Genus_Weight),Weight_n=length(Genus_Weight)) %>% 
-  #Make a new column called "Richness_St_Error" and divide "Richness_Std" by the square root of "Richness_n"
-  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
-  ungroup()
-
-
 
 #### Orthoptera Genus Colors ####
 #Ageneotettix "#661100"
@@ -721,64 +522,6 @@ Weight_Orthoptera_Avg_D<-Weight_Orthoptera_Summed %>%
 #Opeia "#332288"
 #Phoetaliotes "#44AA99"
 #Pseudopomala #7B66D9
-
-
-#2020 - Sweepnet
-SN_2020_Orthoptera<-ggplot(subset(Weight_Orthoptera_Avg_S,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#117733","#332288", "#44AA99"), labels=c("Ageneotettix","Amphiturnus","Arphia","Melanoplus","Opeia","Phoetaliotes"), name = "Genus")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=6)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.position = "NONE",axis.title.x=element_blank(),axis.text.x=element_blank())+
-  geom_text(x=1.3, y=6, label="2020 Sweepnet",size=20)
-
-#2021 - Sweepnet
-SN_2021_Orthoptera<-ggplot(subset(Weight_Orthoptera_Avg_S,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#DDCC77","#6699CC","#117733","#332288", "#44AA99"), labels=c("Ageneotettix","Arphia","Chorthippus","Melanoplus","Opeia","Phoetaliotes"), name = "Genus")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.8)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.position = "NONE",axis.title.x=element_blank(),axis.text.x=element_blank(),axis.title.y=element_blank())+
-  geom_text(x=1.3, y=0.8, label="2021 Sweep",size=20)
-
-SN_2022_Orthoptera<-ggplot(subset(Weight_Orthoptera_Avg_S,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position="stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_fill_manual(values=c("#661100","#DDCC77","#556F2E","#673F3F","#117733","#332288","#44AA99","#7B66D9"), labels=c("Ageneotettix","Arphia","Dissosteira","Eritettix","Melanoplus","Opeia","Phoetaliotes","Pseudopomala"), name = "Genus")+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"), legend.position=c(0.18,0.715))+
-  #Make the y-axis extend to 50
-  expand_limits(y=1.5)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.position = "NONE",axis.title.x=element_blank(),axis.text.x=element_blank(),axis.title.y=element_blank())+
-  geom_text(x=1.3, y=1.5, label="2022 Sweep",size=20)
-
 
 #2020 - Dvac
 Dvac_2020_Orthoptera<-ggplot(subset(Weight_Orthoptera_Avg_D,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, fill=Correct_Genus, position="stack"))+
@@ -838,31 +581,13 @@ Dvac_2022_Orthoptera<-ggplot(subset(Weight_Orthoptera_Avg_D,Year==2022),aes(x=Gr
 
 
 #### Create Average Plot Weight Figure Orthoptera####
-SN_2020_Orthoptera+
-  SN_2021_Orthoptera+
-  SN_2022_Orthoptera+
   Dvac_2020_Orthoptera+  
   Dvac_2021_Orthoptera+
   Dvac_2022_Orthoptera+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4500x3000
 
 #### Normality: Plot Weights by Orthoptera ####
-
-# Sweep Net 2020
-SN_2020_Weight_Orthoptera <- lm(data = subset(Weight_Orthoptera_Summed_S, Year == 2020), log(Genus_Weight)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2020_Weight_Orthoptera) 
-ols_test_normality(SN_2020_Weight_Orthoptera) #normalish
-
-# Sweep Net 2021
-SN_2021_Weight_Orthoptera <- lm(data = subset(Weight_Orthoptera_Summed_S, Year == 2021), log(Genus_Weight)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2021_Weight_Orthoptera) 
-ols_test_normality(SN_2021_Weight_Orthoptera) #normalish
-
-# Sweep Net 2022
-SN_2022_Weight_Orthoptera <- lm(data = subset(Weight_Orthoptera_Summed_S, Year == 2022), log(Genus_Weight)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2022_Weight_Orthoptera) 
-ols_test_normality(SN_2022_Weight_Orthoptera) #normal
 
 # Dvac 2020
 dvac_2020_Weight_Orthoptera <- lm(data = subset(Weight_Orthoptera_Summed_D, Year == 2020), log(Genus_Weight)  ~ Grazing_Treatment)
@@ -881,18 +606,6 @@ ols_test_normality(dvac_2022_Weight_Orthoptera) #normal
 
 #### Glmm for Plot Weights by Grazing Treatment Orthoptera####
 
-# 2020 Sweep net
-Plot_Weight_S_2020_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2020))
-anova(Plot_Weight_S_2020_Glmm_Orthoptera) #not significant
-
-# 2021 Sweep Net
-Plot_Weight_S_2021_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2021))
-anova(Plot_Weight_S_2021_Glmm_Orthoptera) #not significant
-
-# 2022 Sweep Net
-Plot_Weight_S_2022_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_S,Year==2022))
-anova(Plot_Weight_S_2022_Glmm_Orthoptera) #not significant
-
 # 2020 Dvac
 Plot_Weight_D_2020_Glmm_Orthoptera <- lmer(log(Genus_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Orthoptera_Summed_D,Year==2020))
 anova(Plot_Weight_D_2020_Glmm_Orthoptera) #not significant
@@ -909,10 +622,7 @@ anova(Plot_Weight_D_2022_Glmm_Orthoptera) #not significant
 
 #### Calculate Community Metrics ####
 # uses codyn package and finds shannon's diversity 
-Abundance<-ID_Data_Official %>% 
-  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
-  mutate(Abundance=length(Sample_Number)) %>% 
-  ungroup() 
+
 
 #Sweep Net Diversity
 Diversity <- community_diversity(df = Abundance,
@@ -956,69 +666,6 @@ CommunityMetrics_Avg<-CommunityMetrics  %>%
 
 #### Plot Richness ####
 
-# 2020 - Sweepnet
-Richness_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Order Richness")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  expand_limits(y=10)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=10, label="2020 Sweepnet",size=20)
-#save at 1600 x 1200
-
-# 2021 - Sweepnet
-Richness_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
-  #Make the y-axis extend to 50
-  expand_limits(y=10)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=10, label="2021 Sweepnet",size=20)
-#save at 1600 x 1200
-
-#2022 - Sweepnet
-Richness_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
-  #Make the y-axis extend to 50
-  expand_limits(y=10)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=10, label="2022 Sweepnet",size=20)
-#save at 1600 x 1200
-
-
 # 2020 - Dvac
 Richness_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
   #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
@@ -1059,11 +706,6 @@ Richness_2021_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_M
   scale_y_continuous(labels = label_number(accuracy = 1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=10, label="2021 Dvac",size=20)
-  ##LG-HG (p=0.0618), NG-HG (p=0.0119), NG-LG (p=0.4006)
- # annotate("text",x=1.06,y=0.108,label="a**",size=20)+ #no grazing
-  #annotate("text",x=2.03,y=0.088,label="a*",size=20)+ #low grazing
-  #annotate("text",x=3,y=0.034,label="b",size=20) #high grazing
-#Save at the graph at 1500x1500
 
 # 2022 - Dvac
 Richness_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Richness_Mean,fill=Grazing_Treatment))+
@@ -1084,35 +726,16 @@ Richness_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_M
   scale_y_continuous(labels = label_number(accuracy = 1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=10, label="2022 Dvac",size=20)
-#Save at the graph at 1500x1500
 
 #### Create Order Richness Figure ####
-Richness_2020_SN+
-  Richness_2021_SN+
-  Richness_2022_SN+
-  Richness_2020_Dvac+  
+Richness_2020_Dvac+  
   Richness_2021_Dvac+
   Richness_2022_Dvac+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4000x3000
 
 
 #### Normality: Order Richness ####
-
-# Sweep Net 2020
-SN_2020_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), log1p(richness)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2020_OrderRichness) 
-ols_test_normality(SN_2020_OrderRichness) #not great
-
-# Sweep Net 2021
-SN_2021_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (richness)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2021_OrderRichness) 
-ols_test_normality(SN_2021_OrderRichness) #normalish
-
-# Sweep Net 2022
-SN_2022_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(richness)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2022_OrderRichness) 
-ols_test_normality(SN_2022_OrderRichness) #normalish
 
 # Dvac 2020
 dvac_2020_OrderRichness <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),log(richness)  ~ Grazing_Treatment)
@@ -1131,18 +754,6 @@ ols_test_normality(dvac_2022_OrderRichness) #normal
 
 #### Glmm for Richness by Grazing Treatment Orthoptera####
 
-# 2020 Sweep net
-OrderRichness_S_2020_Glmm <- lmer(log1p(richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
-anova(OrderRichness_S_2020_Glmm) #not significant
-
-# 2021 Sweep Net
-OrderRichness_S_2021_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
-anova(OrderRichness_S_2021_Glmm) #not significant
-
-# 2022 Sweep Net
-OrderRichness_S_2022_Glmm <- lmer((richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
-anova(OrderRichness_S_2022_Glmm) #not significant
-
 # 2020 Dvac
 OrderRichness_D_2020_Glmm <- lmer(log(richness) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
 anova(OrderRichness_D_2020_Glmm) #not significant
@@ -1157,69 +768,6 @@ anova(OrderRichness_D_2022_Glmm) #not significant
 
 
 #### Plot Shannon ####
-
-# 2020 - Sweepnet
-Shannon_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Shannon"
-  ylab("Shannon's Diversity")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  expand_limits(y=8)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=8, label="2020 Sweepnet",size=20)
-#save at 1600 x 1200
-
-# 2021 - Sweepnet
-Shannon_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Shannon"
-  ylab("Shannon's Diversity")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
-  #Make the y-axis extend to 50
-  expand_limits(y=8)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=8, label="2021 Sweepnet",size=20)
-#save at 1600 x 1200
-
-#2022 - Sweepnet
-Shannon_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Shannon"
-  ylab("Shannon's Diversity")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
-  #Make the y-axis extend to 50
-  expand_limits(y=8)+
-  scale_y_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=8, label="2022 Sweepnet",size=20)
-#save at 1600 x 1200
-
 
 # 2020 - Dvac
 Shannon_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Shannon_Mean,fill=Grazing_Treatment))+
@@ -1281,34 +829,15 @@ Shannon_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Me
   scale_y_continuous(labels = label_number(accuracy = 1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=8, label="2022 Dvac",size=20)
-#Save at the graph at 1500x1500
 
 #### Create Order Shannon Figure ####
-Shannon_2020_SN+
-  Shannon_2021_SN+
-  Shannon_2022_SN+
-  Shannon_2020_Dvac+  
+Shannon_2020_Dvac+  
   Shannon_2021_Dvac+
   Shannon_2022_Dvac+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4000x3000
 
 #### Normality: Order Shannon ####
-
-# Sweep Net 2020
-SN_2020_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), (Shannon)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2020_OrderShannon) 
-ols_test_normality(SN_2020_OrderShannon) #normalish
-
-# Sweep Net 2021
-SN_2021_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (Shannon)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2021_OrderShannon) 
-ols_test_normality(SN_2021_OrderShannon) #normalish
-
-# Sweep Net 2022
-SN_2022_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(Shannon)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2022_OrderShannon) 
-ols_test_normality(SN_2022_OrderShannon) #normalish
 
 # Dvac 2020
 dvac_2020_OrderShannon <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),(Shannon)  ~ Grazing_Treatment)
@@ -1326,21 +855,6 @@ ols_plot_resid_hist(dvac_2022_OrderShannon)
 ols_test_normality(dvac_2022_OrderShannon) #normal
 
 #### Glmm for Shannon's Diversity by Grazing Treatment####
-
-# 2020 Sweep net
-OrderShannon_S_2020_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
-anova(OrderShannon_S_2020_Glmm) #not significant
-
-# 2021 Sweep Net
-OrderShannon_S_2021_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
-anova(OrderShannon_S_2021_Glmm) #not significant
-
-# 2022 Sweep Net
-OrderShannon_S_2022_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
-anova(OrderShannon_S_2022_Glmm) #0.02115
-## post hoc test for lmer test ##
-summary(glht(OrderShannon_S_2022_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=3.85e-06), #LG-HG (0.0267), NG-HG (0.0129)
-
 
 # 2020 Dvac
 OrderShannon_D_2020_Glmm <- lmer((Shannon) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
@@ -1360,69 +874,6 @@ summary(glht(OrderShannon_D_2022_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")
 
 
 #### Plot Evar ####
-
-# 2020 - Sweepnet
-Evar_2020_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Evar"
-  ylab("Evenness")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.x=element_blank(),legend.position = "none")+
-  expand_limits(y=1)+
-  scale_y_continuous(labels = label_number(accuracy = .01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=1, label="2020 Sweepnet",size=20)
-#save at 1600 x 1200
-
-# 2021 - Sweepnet
-Evar_2021_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2021 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Evar"
-  ylab("Evenness")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
-  #Make the y-axis extend to 50
-  expand_limits(y=1)+
-  scale_y_continuous(labels = label_number(accuracy = .01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=1, label="2021 Sweepnet",size=20)
-#save at 1600 x 1200
-
-#2022 - Sweepnet
-Evar_2022_SN<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Method=="sweep"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
-  geom_bar(stat="identity",position = "dodge")+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Evar"
-  ylab("Evenness")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
-  theme(axis.text.x=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position = "none",axis.text.y=element_blank())+
-  #Make the y-axis extend to 50
-  expand_limits(y=1)+
-  scale_y_continuous(labels = label_number(accuracy = .01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=1.0, y=1, label="2022 Sweepnet",size=20)
-#save at 1600 x 1200
-
 
 # 2020 - Dvac
 Evar_2020_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2020 & Collection_Method=="dvac"),aes(x=Grazing_Treatment,y=Evar_Mean,fill=Grazing_Treatment))+
@@ -1484,35 +935,16 @@ Evar_2022_Dvac<-ggplot(subset(CommunityMetrics_Avg,Year==2022 & Collection_Metho
   scale_y_continuous(labels = label_number(accuracy = .01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=0.85, y=1, label="2022 Dvac",size=20)
-#Save at the graph at 1500x1500
 
 #### Create Order Evar Figure ####
-Evar_2020_SN+
-  Evar_2021_SN+
-  Evar_2022_SN+
-  Evar_2020_Dvac+  
+Evar_2020_Dvac+  
   Evar_2021_Dvac+
   Evar_2022_Dvac+
-  plot_layout(ncol = 3,nrow = 2)
+  plot_layout(ncol = 3,nrow = 1)
 #Save at 4000x3000
 
 
 #### Normality: Order Evar ####
-
-# Sweep Net 2020
-SN_2020_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="sweep"), (Evar)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2020_OrderEvar) 
-ols_test_normality(SN_2020_OrderEvar) #normalish
-
-# Sweep Net 2021
-SN_2021_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2021 & Collection_Method=="sweep"), (Evar)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2021_OrderEvar) 
-ols_test_normality(SN_2021_OrderEvar) #normalish
-
-# Sweep Net 2022
-SN_2022_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2022 & Collection_Method=="sweep"),(Evar)  ~ Grazing_Treatment)
-ols_plot_resid_hist(SN_2022_OrderEvar) 
-ols_test_normality(SN_2022_OrderEvar) #normalish
 
 # Dvac 2020
 dvac_2020_OrderEvar <- lm(data = subset(CommunityMetrics, Year == 2020 & Collection_Method=="dvac"),(Evar)  ~ Grazing_Treatment)
@@ -1531,18 +963,6 @@ ols_test_normality(dvac_2022_OrderEvar) #normalish
 
 #### Glmm for Evenness by Grazing Treatment ####
 
-# 2020 Sweep net
-OrderEvar_S_2020_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="sweep"))
-anova(OrderEvar_S_2020_Glmm) #not significant
-
-# 2021 Sweep Net
-OrderEvar_S_2021_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2021 & Collection_Method=="sweep"))
-anova(OrderEvar_S_2021_Glmm) #not significant
-
-# 2022 Sweep Net
-OrderEvar_S_2022_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="sweep"))
-anova(OrderEvar_S_2022_Glmm) #not significant
-
 # 2020 Dvac
 OrderEvar_D_2020_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2020 & Collection_Method=="dvac"))
 anova(OrderEvar_D_2020_Glmm) #not significant
@@ -1552,7 +972,6 @@ OrderEvar_D_2021_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = 
 anova(OrderEvar_D_2021_Glmm) #0.03418
 #### post hoc test for lmer test ####
 summary(glht(OrderEvar_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=00.1897), #LG-HG (0.1897), NG-HG (0.0204)
-
 
 # 2022 Dvac
 OrderEvar_D_2022_Glmm <- lmer((Evar) ~ Grazing_Treatment + (1 | Block) , data = subset(CommunityMetrics,Year==2022 & Collection_Method=="dvac"))
@@ -1568,58 +987,14 @@ Abundance[55, "Sample_Number"] <- 11
 Abundance[2070, "Sample_Number"] <- 2
 Abundance[2071, "Sample_Number"] <- 3
 
-Abundance_Wide<-Abundance %>%
+Abundance_Wide_D<-Abundance %>%
   dplyr::select(-c(Correct_Family,Correct_Genus, Correct_Species,Notes,Coll_Year_Bl_Trt,Coll_Year_Bl_Trt_Pl,Sample_Number)) %>% 
   unique() %>% 
   spread(key=Correct_Order,value=Abundance, fill=0) %>% 
-  select(-c(Unknown, unknown_1,"<NA>"))
-
-#seperate out sweep net and dvac
-Abundance_Wide_S<-Abundance_Wide %>% 
-  filter(Collection_Method=="sweep")
-
-Abundance_Wide_D<-Abundance_Wide %>% 
+  select(-c(Unknown,"<NA>")) %>% 
   filter(Collection_Method=="dvac")
 
 #### Make new data frame called BC_Data and run an NMDS 
-
-#sweepnet
-BC_Data_S <- metaMDS(Abundance_Wide_S[,6:15])
-#look at species signiciance driving NMDS 
-intrinsics <- envfit(BC_Data_S, Abundance_Wide_S, permutations = 999)
-head(intrinsics)
-#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
-sites <- 1:nrow(Abundance_Wide_S)
-#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
-BC_Meta_Data_S <- Abundance_Wide_S[,1:5] %>% 
-  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
-#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
-plot(BC_Data_S$points,col=as.factor(BC_Meta_Data_S$Trt_Year))
-#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
-ordiellipse(BC_Data_S,groups = as.factor(BC_Meta_Data_S$Trt_Year),kind = "sd",display = "sites", label = T)
-
-#Use the vegan ellipse function to make ellipses           
-veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
-{
-  theta <- (0:npoints) * 2 * pi/npoints
-  Circle <- cbind(cos(theta), sin(theta))
-  t(center + scale * t(Circle %*% chol(cov)))
-}
-#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
-BC_NMDS_S = data.frame(MDS1 = BC_Data_S$points[,1], MDS2 = BC_Data_S$points[,2],group=BC_Meta_Data_S$Trt_Year)
-#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
-BC_NMDS_Graph_S <- cbind(BC_Meta_Data_S,BC_NMDS_S)
-#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
-BC_Ord_Ellipses_S<-ordiellipse(BC_Data_S, BC_Meta_Data_S$Trt_Year, display = "sites",
-                               kind = "se", conf = 0.95, label = T)
-#Make a new empty data frame called BC_Ellipses                
-BC_Ellipses_S <- data.frame()
-#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
-for(g in unique(BC_NMDS_S$group)){
-  BC_Ellipses_S <- rbind(BC_Ellipses_S, cbind(as.data.frame(with(BC_NMDS_S[BC_NMDS_S$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_S[[g]]$cov,BC_Ord_Ellipses_S[[g]]$center,BC_Ord_Ellipses_S[[g]]$scale)))
-                                              ,group=g))
-}
-
 
 #dvac
 BC_Data_D <- metaMDS(Abundance_Wide_D[,6:15])
@@ -1633,6 +1008,14 @@ BC_Meta_Data_D <- Abundance_Wide_D[,1:5] %>%
   mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
 #make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
 plot(BC_Data_D$points,col=as.factor(BC_Meta_Data_D$Trt_Year))
+
+#Use the vegan ellipse function to make ellipses           
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
 #make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
 ordiellipse(BC_Data_D,groups = as.factor(BC_Meta_Data_D$Trt_Year),kind = "sd",display = "sites", label = T)
 
@@ -1652,29 +1035,6 @@ for(g in unique(BC_NMDS_D$group)){
 }
 
 #### NMDS Figures: By Order ####
-
-#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-NMDS_Sweep<-ggplot(data = subset(BC_NMDS_Graph_S), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
-  #make a point graph where the points are size 5.  Color them based on exlosure
-  geom_point(size=8, stroke = 2) +
-  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
-  geom_path(data = BC_Ellipses_S, aes(x=NMDS1, y=NMDS2), size=4)+
-  #make shape, color, and linetype in one combined legend instead of three legends
-  labs(color  = "", linetype = "", shape = "")+
-  # make legend 2 columns
-  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
-  #change order of legend
-  scale_shape_manual(values=c(15,16,17,22,21,24,21,15,17),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4","red","yellow","blue"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash","solid","solid","solid"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
-  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
-  xlab("NMDS1")+
-  ylab("NMDS2")+
-  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet 2020",size=20)
-  
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 NMDS_Dvac<-ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
@@ -1700,7 +1060,6 @@ NMDS_Dvac<-ggplot(data = BC_NMDS_Graph_D, aes(MDS1,MDS2, shape = group,color=gro
 #export at 2000 x 1800
 
 #### Create NMDS: By Order ####
-NMDS_Sweep+
   NMDS_Dvac+
   plot_layout(ncol = 1,nrow = 2)
 #Save at 4000x3000
@@ -1708,27 +1067,6 @@ NMDS_Sweep+
 
 ##PerMANOVA
 
-#Sweepnet
-#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
-Species_Matrix_S <- Abundance_Wide_S[,6:ncol(Abundance_Wide_S)]
-#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
-Environment_Matrix_S <- Abundance_Wide_S[,1:5]
-
-Environment_Matrix_S$Grazing_Treatment_Fact=as.factor(Environment_Matrix_S$Grazing_Treatment)
-Environment_Matrix_S$Block_Fact=as.numeric(Environment_Matrix_S$Block)
-Environment_Matrix_S$Plot_Fact=as.factor(Environment_Matrix_S$Plot)
-Environment_Matrix_S$Year_Fact=as.factor(Environment_Matrix_S$Year)
-
-#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
-#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
-PerMANOVA2_S <- adonis2(formula = Species_Matrix_S~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_S,permutations = 999, method = "bray")
-#give a print out of the PermMANOVA
-print(PerMANOVA2_S) #Grazing (NS), Year (0.001), GxYear (NS)
-#pairwise test
-Posthoc_SN_Year<-pairwise.adonis(Species_Matrix_S,factors=Environment_Matrix_S$Year, p.adjust.m = "BH")
-Posthoc_SN_Year   #2020-2021 (0.002), 2021-2022 (0.002), 2020-2022 (0.002)
-
-#Dvac
 #Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
 Species_Matrix_D <- Abundance_Wide_D[,6:ncol(Abundance_Wide_D)]
 #Make a new dataframe with data from Wide_Relative_Cover columns 1-3
@@ -1756,20 +1094,8 @@ Posthoc_D_Grazing_Year #Significant: HG-NG (2021)
 
 
 #### PERMDISP: By Order ####
-
-#seperate out sweep net and dvac
-Abundance_Wide_S_dispr<-Abundance_Wide_S %>% 
-  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
-
 Abundance_Wide_D_dispr<-Abundance_Wide_D %>% 
   mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
-
-#Sweepnet
-#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
-BC_Distance_Matrix_S <- vegdist(Species_Matrix_S)
-#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
-Dispersion_Results_Grazing_S <- betadisper(BC_Distance_Matrix_S,Abundance_Wide_S_dispr$Gr_Yr)
-permutest(Dispersion_Results_Grazing_S,pairwise = T, permutations = 999) 
 
 #Dvac
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
@@ -1790,17 +1116,11 @@ Abundance_OrthopteraGenus<-ID_Data_Official %>%
 
 #Create wide relative cover dataframe
 
-Abundance_Wide_OrthopteraGenus<-Abundance_OrthopteraGenus %>%
+Abundance_Wide_D__OrthopteraGenus<-Abundance_OrthopteraGenus %>%
   dplyr::select(-c(Correct_Order,Correct_Family, Correct_Species,Notes,Coll_Year_Bl_Trt,Coll_Year_Bl_Trt_Pl,Sample_Number)) %>% 
   unique() %>% 
   spread(key=Correct_Genus,value=Abundance, fill=0) %>% 
-  select(-c("<NA>"))
-
-#seperate out sweep net and dvac
-Abundance_Wide_S_OrthopteraGenus<-Abundance_Wide_OrthopteraGenus %>% 
-  filter(Collection_Method=="sweep")
-
-Abundance_Wide_D__OrthopteraGenus<-Abundance_Wide_OrthopteraGenus %>% 
+  select(-c("<NA>"))%>% 
   filter(Collection_Method=="dvac") %>% 
   mutate(Treatment=paste(Year,Plot,sep=".")) %>% 
   #remove plot 29 because it had no grasshoppers
@@ -1809,39 +1129,8 @@ Abundance_Wide_D__OrthopteraGenus<-Abundance_Wide_OrthopteraGenus %>%
 
 #### Make new data frame called BC_Data and run an NMDS 
 
-#sweepnet
-BC_Data_S_OrthopteraGenus <- metaMDS(Abundance_Wide_S_OrthopteraGenus[,6:15])
-#look at species signiciance driving NMDS 
-intrinsics <- envfit(BC_Data_S_OrthopteraGenus, Abundance_Wide_S_OrthopteraGenus, permutations = 999)
-head(intrinsics)
-#Make a data frame called sites with 1 column and same number of rows that is in Wide Order weight
-sites <- 1:nrow(Abundance_Wide_S_OrthopteraGenus)
-#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
-BC_Meta_Data_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,1:5] %>% 
-  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
-#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
-plot(BC_Data_S_OrthopteraGenus$points,col=as.factor(BC_Meta_Data_S_OrthopteraGenus$Trt_Year))
-#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
-ordiellipse(BC_Data_S_OrthopteraGenus,groups = as.factor(BC_Meta_Data_S_OrthopteraGenus$Trt_Year),kind = "sd",display = "sites", label = T)
-
-#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
-BC_NMDS_S_OrthopteraGenus = data.frame(MDS1 = BC_Data_S_OrthopteraGenus$points[,1], MDS2 = BC_Data_S_OrthopteraGenus$points[,2],group=BC_Meta_Data_S_OrthopteraGenus$Trt_Year)
-#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
-BC_NMDS_Graph_S_OrthopteraGenus <- cbind(BC_Meta_Data_S_OrthopteraGenus,BC_NMDS_S_OrthopteraGenus)
-#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
-BC_Ord_Ellipses_S_OrthopteraGenus<-ordiellipse(BC_Data_S_OrthopteraGenus, BC_Meta_Data_S_OrthopteraGenus$Trt_Year, display = "sites",
-                               kind = "se", conf = 0.95, label = T)
-#Make a new empty data frame called BC_Ellipses                
-BC_Ellipses_S_OrthopteraGenus <- data.frame()
-#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
-for(g in unique(BC_NMDS_S_OrthopteraGenus$group)){
-  BC_Ellipses_S_OrthopteraGenus <- rbind(BC_Ellipses_S_OrthopteraGenus, cbind(as.data.frame(with(BC_NMDS_S_OrthopteraGenus[BC_NMDS_S_OrthopteraGenus$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$cov,BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$center,BC_Ord_Ellipses_S_OrthopteraGenus[[g]]$scale)))
-                                              ,group=g))
-}
-
-
 #dvac
-BC_Data_D__OrthopteraGenus <- metaMDS(Abundance_Wide_D__OrthopteraGenus[,6:15])
+BC_Data_D__OrthopteraGenus <- metaMDS(Abundance_Wide_D__OrthopteraGenus[,6:13])
 #look at species signiciance driving NMDS 
 intrinsics <- envfit(BC_Data_D__OrthopteraGenus, Abundance_Wide_D__OrthopteraGenus, permutations = 999)
 head(intrinsics)
@@ -1871,29 +1160,6 @@ for(g in unique(BC_NMDS_D__OrthopteraGenus$group)){
 }
 
 #### NMDS Figures: Orthoptera Genus  ####
-
-#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-NMDS_Sweep_OrthopteraGenus<-ggplot(data = subset(BC_NMDS_Graph_S_OrthopteraGenus), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
-  #make a point graph where the points are size 5.  Color them based on exlosure
-  geom_point(size=8, stroke = 2) +
-  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
-  geom_path(data = BC_Ellipses_S_OrthopteraGenus, aes(x=NMDS1, y=NMDS2), size=4)+
-  #make shape, color, and linetype in one combined legend instead of three legends
-  labs(color  = "", linetype = "", shape = "")+
-  # make legend 2 columns
-  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
-  #change order of legend
-  scale_shape_manual(values=c(15,16,17,22,21,24,21,15,17),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  scale_color_manual(values=c("skyblue3","springgreen3","plum3","royalblue4","springgreen4","plum4","red","yellow","blue"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  scale_linetype_manual(values=c("solid","twodash","longdash","solid","twodash","longdash","solid","solid","solid"),labels = c("Heavy 2020","Destock 2020", "No Grazing 2020","Heavy 2021","Destock 2021", "No Grazing 2021","Heavy 2022","Destock 2022", "No Grazing 2022"), breaks = c("HG.2020","LG.2020","NG.2020","HG.2021","LG.2021","NG.2021","HG.2022","LG.2022","NG.2022"),name="")+
-  #make the text size of the legend titles 28
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
-  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
-  xlab("NMDS1")+
-  ylab("NMDS2")+
-  theme(text = element_text(size = 55),legend.text=element_text(size=40))+
-  annotate(geom="text", x=-1.5, y=0.8, label="Sweepnet 2020",size=20)
-
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
 NMDS_Dvac_OrthopteraGenus<-ggplot(data = BC_NMDS_Graph_D__OrthopteraGenus, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   #make a point graph where the points are size 5.  Color them based on exlosure
@@ -1926,28 +1192,6 @@ NMDS_Sweep_OrthopteraGenus+
 #### PERMANOVA: Orthoptera Genus  ####
 
 ##PerMANOVA
-
-#Sweepnet
-#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
-Species_Matrix_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,6:ncol(Abundance_Wide_S_OrthopteraGenus)]
-#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
-Environment_Matrix_S_OrthopteraGenus <- Abundance_Wide_S_OrthopteraGenus[,1:5]
-
-Environment_Matrix_S_OrthopteraGenus$Grazing_Treatment_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Grazing_Treatment)
-Environment_Matrix_S_OrthopteraGenus$Block_Fact=as.numeric(Environment_Matrix_S_OrthopteraGenus$Block)
-Environment_Matrix_S_OrthopteraGenus$Plot_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Plot)
-Environment_Matrix_S_OrthopteraGenus$Year_Fact=as.factor(Environment_Matrix_S_OrthopteraGenus$Year)
-
-#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
-#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
-PerMANOVA2_S_OrthopteraGenus <- adonis2(formula = Species_Matrix_S_OrthopteraGenus~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_S_OrthopteraGenus,permutations = 999, method = "bray")
-#give a print out of the PermMANOVA
-print(PerMANOVA2_S_OrthopteraGenus) #Grazing (NS), Year (0.001), GxYear (NS)
-#pairwise test
-Posthoc_S_OrthopteraGenus_Year<-pairwise.adonis(Species_Matrix_S_OrthopteraGenus,factors=Environment_Matrix_S_OrthopteraGenus$Year, p.adjust.m = "BH")
-Posthoc_S_OrthopteraGenus_Year   #2020-2021 (0.001), 2021-2022 (0.001), 2020-2022 (0.001)
-
-#Dvac
 #Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
 Species_Matrix_D__OrthopteraGenus <- Abundance_Wide_D__OrthopteraGenus[,6:ncol(Abundance_Wide_D__OrthopteraGenus)]
 #Make a new dataframe with data from Wide_Relative_Cover columns 1-3
@@ -1974,19 +1218,8 @@ Posthoc_D__OrthopteraGenus_Grazing #NS
 
 #### PERMDISP: Orthoptera Genus  ####
 
-#seperate out sweep net and dvac
-Abundance_Wide_S_OrthopteraGenus_dispr<-Abundance_Wide_S_OrthopteraGenus %>% 
-  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
-
 Abundance_Wide_D__OrthopteraGenus_dispr<-Abundance_Wide_D__OrthopteraGenus %>% 
   mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
-
-#Sweepnet
-#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
-BC_Distance_Matrix_S_OrthopteraGenus <- vegdist(Species_Matrix_S_OrthopteraGenus)
-#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
-Dispersion_Results_Grazing_S_OrthopteraGenus <- betadisper(BC_Distance_Matrix_S_OrthopteraGenus,Abundance_Wide_S_OrthopteraGenus_dispr$Gr_Yr)
-permutest(Dispersion_Results_Grazing_S_OrthopteraGenus,pairwise = T, permutations = 999) 
 
 #Dvac
 #Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
