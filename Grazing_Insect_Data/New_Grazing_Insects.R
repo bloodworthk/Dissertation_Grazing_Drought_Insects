@@ -145,6 +145,19 @@ ID_Data_Official<-ID_20 %>%
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-"))
 
+#### Abundance by Count ####
+Abundance<-ID_Data_Official %>% 
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
+  mutate(Abundance=length(Sample_Number)) %>% 
+  ungroup() 
+
+Abundance_Plot<-ID_Data_Official %>% 
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot) %>% 
+  mutate(Plot_Abundance=length(Sample_Number)) %>% 
+  ungroup() %>% 
+  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Plot_Abundance) %>% 
+  unique() 
+
 #### Formatting and Cleaning Weight Data ####
 
 Weight_20<-Weight_Data_20 %>%
@@ -243,14 +256,8 @@ Weight_Data_Official<-Weight_20 %>%
   filter(!is.na(Dry_Weight_g)) %>% 
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-") 
 
-#### Abundance by Count ####
-Abundance<-ID_Data_Official %>% 
-group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
-  mutate(Abundance=length(Sample_Number)) %>% 
-  ungroup() 
 
-
-####Total Plot Weight Differences ####
+#### Abundance By Weight ####
 
 #Summing all weights by order within dataset, grazing treatment, block, and plot so that we can look at differences in order across plots
 Weight_Data_Summed<-aggregate(Dry_Weight_g~Coll_Year_Bl_Trt+Plot+Correct_Order, data=Weight_Data_Official, FUN=sum, na.rm=FALSE) 
@@ -268,15 +275,23 @@ Weight_Data_Summed_dvac<-Weight_Data_Summed %>%
   summarise(Plot_Weight=sum(Dry_Weight_g)) %>% 
   ungroup() 
  
-
-### Average Plot Weight across Grazing treatment ####
+### Average Abudnance across Grazing treatment ####
 Weight_by_Grazing_dvac<-Weight_Data_Summed_dvac %>% 
   group_by(Year,Grazing_Treatment) %>% 
   summarise(Average_Weight=mean(Plot_Weight),Weight_SD=sd(Plot_Weight),Weight_n=length(Plot_Weight)) %>% 
-  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n))
+  mutate(Weight_St_Error=Weight_SD/sqrt(Weight_n)) %>% 
+  ungroup()
+
+Abundance_by_Grazing_Avg<-Abundance_Plot %>% 
+  group_by(Year,Grazing_Treatment) %>%
+  summarise(Average_Plot_Abundance=mean(Plot_Abundance),Plot_Abundance_SD=sd(Plot_Abundance),Plot_Abundance_n=length(Plot_Abundance)) %>% 
+  mutate(Plot_Abundance_St_Error=Plot_Abundance_SD/sqrt(Plot_Abundance_n)) %>% 
+  ungroup()
+
 
 ##reorder bar graphs##
 Weight_by_Grazing_dvac$Grazing_Treatment <- factor(Weight_by_Grazing_dvac$Grazing_Treatment, levels = c("NG", "LG", "HG"))
+Abundance_by_Grazing_Avg$Grazing_Treatment <- factor(Abundance_by_Grazing_Avg$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 
 #### Total Plot Weight Differences - Figures ####
 
@@ -299,7 +314,7 @@ Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_T
   expand_limits(y=0.5)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.5, label="2020 Dvac",size=20)
+  geom_text(x=0.85, y=0.5, label="2020 Weight",size=20)
 
 # 2021 - Dvac
 #Graph of Weights from dvac by Grazing treatment- 2021
@@ -320,7 +335,7 @@ Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_T
   expand_limits(y=0.2)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.2, label="2021 Dvac",size=20)
+  geom_text(x=0.85, y=0.2, label="2021 Weight",size=20)
 
 # 2022 - Dvac
 #Graph of Weights from dvac by Grazing treatment- 2021
@@ -341,14 +356,84 @@ Dvac_2022_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2022),aes(x=Grazing_T
   expand_limits(y=0.1)+
   scale_y_continuous(labels = label_number(accuracy = 0.01))+
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.1, label="2022 Dvac",size=20)
+  geom_text(x=0.85, y=0.1, label="2022 Weight",size=20)
 
 #### Create Average Plot Weight Figure ####
   Dvac_2020_Plot+  
   Dvac_2021_Plot+
   Dvac_2022_Plot+
   plot_layout(ncol = 3,nrow = 1)
-#Save at 4500x3000
+#Save at 4500x2000
+
+#### Abundance by Count Figure ####
+#Graph of Plot_Abundances from Dvac by Grazing treatment- 2020
+Count_2020_Plot<-ggplot(subset(Abundance_by_Grazing_Avg,Year==2020),aes(x=Grazing_Treatment,y=Average_Plot_Abundance,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Count")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=25)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=25, label="2020 Count",size=20)
+
+# 2021 - Dvac
+#Graph of Plot_Abundances from dvac by Grazing treatment- 2021
+Count_2021_Plot<-ggplot(subset(Abundance_by_Grazing_Avg,Year==2021),aes(x=Grazing_Treatment,y=Average_Plot_Abundance,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Count")+
+  theme(legend.background=element_blank())+ 
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=25)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=25, label="2021 Count",size=20)
+
+# 2022 - Dvac
+#Graph of Plot_Abundances from dvac by Grazing treatment- 2021
+Count_2022_Plot<-ggplot(subset(Abundance_by_Grazing_Avg,Year==2022),aes(x=Grazing_Treatment,y=Average_Plot_Abundance,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Count")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(axis.title.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=300)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=300, label="2022 Count",size=20)
+
+#### Create Average Plot Weight Figure ####
+Count_2020_Plot+  
+  Count_2021_Plot+
+  Count_2022_Plot+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4500x2000
 
 #### Normality: Plot Weights####
 # Dvac 2020
@@ -380,6 +465,39 @@ summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey"))
 # 2022 Dvac
 Plot_Weight_D_2022_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2022))
 anova(Plot_Weight_D_2022_Glmm) #not significant
+
+#### Normality: Plot Count####
+# Dvac 2020
+dvac_2020_count <- lm(data = subset(Abundance_Plot, Year == 2020), log(Plot_Abundance)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2020_count) 
+ols_test_normality(dvac_2020_count) #normal
+
+# dvac 2021
+dvac_2021_count <- lm(data = subset(Abundance_Plot, Year == 2021), log(Plot_Abundance)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2021_count) 
+ols_test_normality(dvac_2021_count) #normal
+
+# dvac 2022
+dvac_2022_count <- lm(data = subset(Abundance_Plot, Year == 2022), log(Plot_Abundance)  ~ Grazing_Treatment)
+ols_plot_resid_hist(dvac_2022_count) 
+ols_test_normality(dvac_2022_count) #normal
+
+#### Glmm for Plot Count by Grazing Treatment####
+# 2020 Dvac
+Count_2020_Glmm <- lmer(log(Plot_Abundance) ~ Grazing_Treatment + (1 | Block) , data = subset(Abundance_Plot,Year==2020))
+anova(Count_2020_Glmm) #not significant
+
+# 2021 Dvac
+Count_2021_Glmm <- lmer(log(Plot_Abundance) ~ Grazing_Treatment + (1 | Block) , data = subset(Abundance_Plot,Year==2021))
+anova(Count_2021_Glmm) #0.02996
+###post hoc test for lmer test ##
+summary(glht(Count_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.0.2455, #LG-HG (0.1655), NG-HG (0.0175)
+
+# 2022 Dvac
+Count_2022_Glmm <- lmer(log(Plot_Abundance) ~ Grazing_Treatment + (1 | Block) , data = subset(Abundance_Plot,Year==2022))
+anova(Count_2022_Glmm) #0.0119
+###post hoc test for lmer test ##
+summary(glht(Count_2022_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.06767, #LG-HG (0.00568), NG-HG (0.27006)
 
 #### Average by order across Grazing treatment ####
 
@@ -1212,9 +1330,8 @@ print(PerMANOVA2_D__OrthopteraGenus)  #Grazing (0.0187), Year (0.001), GxYear (N
 Posthoc_D__OrthopteraGenus_Year<-pairwise.adonis(Species_Matrix_D__OrthopteraGenus,factors=Environment_Matrix_D__OrthopteraGenus$Year, p.adjust.m = "BH")
 Posthoc_D__OrthopteraGenus_Year   #2020-2021 (0.001), 2021-2022 (0.001), 2020-2022 (0.001)
 #pairwise test
-Posthoc_D__OrthopteraGenus_Grazing<-pairwise.adonis(Species_Matrix_D__OrthopteraGenus,factors=Environment_Matrix_D__OrthopteraGenus$Grazing_Treatment, p.adjust.m = "BH")
-Posthoc_D__OrthopteraGenus_Grazing #NS
-
+Posthoc_D__OrthopteraGenus_Grazing_Year<-pairwise.adonis(Species_Matrix_D__OrthopteraGenus,factors=Environment_Matrix_D__OrthopteraGenus$Gr_Yr, p.adjust.m = "BH")
+Posthoc_D__OrthopteraGenus_Grazing_Year #Significant: HG-NG (2021)
 
 #### PERMDISP: Orthoptera Genus  ####
 
