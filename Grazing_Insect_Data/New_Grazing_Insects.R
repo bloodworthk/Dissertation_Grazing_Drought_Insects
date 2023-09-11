@@ -24,6 +24,8 @@ library(olsrr)
 library(patchwork)
 library(codyn)
 library(pairwiseAdonis)
+#install.packages("ggpattern")
+library(ggpattern)
 
 #Set ggplot2 theme to black and white
 theme_set(theme_bw())
@@ -156,6 +158,11 @@ Abundance_Plot<-ID_Data_Official %>%
   mutate(Plot_Abundance=length(Sample_Number)) %>% 
   ungroup() %>% 
   select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Plot_Abundance) %>% 
+  unique() 
+
+Abundance_Plot_Orthoptera<-Abundance %>% 
+  filter(Correct_Order=="Orthoptera") %>%
+  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Abundance) %>% 
   unique() 
 
 #### Formatting and Cleaning Weight Data ####
@@ -315,41 +322,36 @@ Weight_Total_Order<-Weight_by_Order_Dvac %>%
   select(Year,Grazing_Treatment,Correct_Order,Average_Weight,Weight_SD,Weight_n,Weight_St_Error) %>% 
   filter(Correct_Order=="Orthoptera") %>% 
   rbind(Weight_Plot_Minus_Orthoptera) 
-
-install.packages("ggpattern")
-library(ggpattern)
-
-
-ggplot(subset(Weight_Total_Order,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
-  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
-  geom_bar(stat="identity",position = position_stack(reverse = TRUE))+
-  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
-  #geom_errorbar(data=subset(Weight_Total_Order,Correct_Order=="Plot"),aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
-  #Label the x-axis "Treatment"
-  xlab("Grazing Treatment")+
-  #Label the y-axis "Species Richness"
-  ylab("Average Plot Weight (g)")+
-  theme(legend.background=element_blank())+
-  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
-  scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                  'Orthoptera'="stripe")) +
-  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
-  #Make the y-axis extend to 50
-  expand_limits(y=0.5)+
-  scale_y_continuous(labels = label_number(accuracy = 0.01))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
-  geom_text(x=0.85, y=0.5, label="2020 Weight",size=20)
-
  
 ### Average Abundance (Count) plot level####
-
+Abundance_Plot_Orthoptera_Avg<-Abundance_Plot_Orthoptera %>% 
+  rename(OrthopteraAbundance=Abundance) %>%
+  #add a row for plot 43 which has no orthoptera
+  add_row(Collection_Method = "dvac", Year=2022, Block = "3", Grazing_Treatment="HG",Plot=43, OrthopteraAbundance=0) %>% 
+  group_by(Year,Grazing_Treatment) %>%
+  summarise(Average_Plot_Abundance=mean(OrthopteraAbundance),Plot_Abundance_SD=sd(OrthopteraAbundance),Plot_Abundance_n=length(OrthopteraAbundance)) %>% 
+  mutate(Plot_Abundance_St_Error=Plot_Abundance_SD/sqrt(Plot_Abundance_n)) %>% 
+  ungroup() %>% 
+  mutate(Correct_Order="Orthoptera")
+  
 Abundance_by_Grazing_Avg<-Abundance_Plot %>% 
   group_by(Year,Grazing_Treatment) %>%
   summarise(Average_Plot_Abundance=mean(Plot_Abundance),Plot_Abundance_SD=sd(Plot_Abundance),Plot_Abundance_n=length(Plot_Abundance)) %>% 
   mutate(Plot_Abundance_St_Error=Plot_Abundance_SD/sqrt(Plot_Abundance_n)) %>% 
   ungroup() %>% 
   mutate(Correct_Order="Plot")
+
+Abundance_Plot_Minus_Orthoptera <-Abundance_Plot_Orthoptera_Avg %>% 
+  rename(AvgOrthopteraAbundance=Average_Plot_Abundance) %>% 
+  select(Year,Grazing_Treatment,AvgOrthopteraAbundance) %>% 
+  left_join(Abundance_by_Grazing_Avg) %>% 
+  mutate(NonOrtho_Plot_Abundance=Average_Plot_Abundance-AvgOrthopteraAbundance) %>% 
+  select(Year,Grazing_Treatment,Correct_Order,NonOrtho_Plot_Abundance,Plot_Abundance_SD,Plot_Abundance_n,Plot_Abundance_St_Error) %>% 
+  rename(Average_Plot_Abundance=NonOrtho_Plot_Abundance) 
+
+Abundance_Total_Order<-Abundance_Plot_Orthoptera_Avg %>% 
+  select(Year,Grazing_Treatment,Correct_Order,Average_Plot_Abundance,Plot_Abundance_SD,Plot_Abundance_n,Plot_Abundance_St_Error) %>% 
+  rbind(Abundance_Plot_Minus_Orthoptera) 
 
 
 
@@ -563,7 +565,159 @@ anova(Count_2022_Glmm) #0.0119
 ###post hoc test for lmer test ##
 summary(glht(Count_2022_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.06767, #LG-HG (0.00568), NG-HG (0.27006)
 
+#### Graphs: Plot Weight with Grasshoppers Hatched ####
+Weight_Plot_WGrasshoppers_2020<-ggplot(subset(Weight_Total_Order,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Weight, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Weight_by_Grazing_dvac, Year==2020),aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=0.5, label="2020 Weight",size=20)
 
+Weight_Plot_WGrasshoppers_2021<-ggplot(subset(Weight_Total_Order,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Weight, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Weight_by_Grazing_dvac, Year==2021),aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=0.2, label="2021 Weight",size=20)
+
+Weight_Plot_WGrasshoppers_2022<-ggplot(subset(Weight_Total_Order,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Weight, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Weight_by_Grazing_dvac, Year==2022),aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=0.1, label="2022 Weight",size=20)
+
+#### Create Average Plot Weight Figure ####
+Weight_Plot_WGrasshoppers_2020+  
+  Weight_Plot_WGrasshoppers_2021+
+  Weight_Plot_WGrasshoppers_2022+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4500x2000
+
+#### Graphs: Plot Count with Grasshoppers Hatched ####
+Count_WGrasshoppers_2020<-ggplot(subset(Abundance_Total_Order,Year==2020),aes(x=Grazing_Treatment,y=Average_Plot_Abundance, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Plot_Abundance, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Abundance_by_Grazing_Avg, Year==2020),aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=25)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=25, label="2020 Count",size=20)
+
+Count_WGrasshoppers_2021<-ggplot(subset(Abundance_Total_Order,Year==2021),aes(x=Grazing_Treatment,y=Average_Plot_Abundance, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Plot_Abundance, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Abundance_by_Grazing_Avg, Year==2021),aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=20)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=20, label="2021 Count",size=20)
+
+Count_WGrasshoppers_2022<-ggplot(subset(Abundance_Total_Order,Year==2022),aes(x=Grazing_Treatment,y=Average_Plot_Abundance, pattern=Correct_Order,fill=Correct_Order, position = "stack"))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = position_stack(reverse = TRUE),color="black")+
+  geom_col_pattern(aes(Grazing_Treatment,Average_Plot_Abundance, pattern_fill = Correct_Order),pattern = c('stripe','stripe','stripe','none','none','none'),fill= 'grey20', colour  = 'grey20',position = position_stack(reverse = TRUE),pattern_alpha = 0.6) +
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(data=subset(Abundance_by_Grazing_Avg, Year==2022),aes(ymin=Average_Plot_Abundance-Plot_Abundance_St_Error,ymax=Average_Plot_Abundance+Plot_Abundance_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
+                                                       'Orthoptera'="stripe")) +
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=250)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=250, label="2022 Count",size=20)
+
+#### Create Average Plot Weight Figure ####
+Count_WGrasshoppers_2020 +  
+  Count_WGrasshoppers_2021 +
+  Count_WGrasshoppers_2022 +
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4500x2000
+
+Dvac_2020_Order+  
+  Dvac_2021_Order+
+  Dvac_2022_Order+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4500x3000
 
 #### Total Plot Weight Differences by Order - Figures ####
 #Colors:
