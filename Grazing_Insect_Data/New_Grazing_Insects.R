@@ -80,6 +80,12 @@ Weight_Data_22<-read.csv("2022_Sweep_Net_D-Vac_Weight_Data_FK.csv",header=T) %>%
   mutate(Collection_Method=ifelse(Collection_Method=="d-vac","dvac",ifelse(Collection_Method=="sweep_net","sweep",Collection_Method)))%>% 
   filter(Collection_Method=="dvac")
 
+#Plant Species Comp Data 
+PlantComp<-read.csv("Plant_Species_Comp_2022.csv",header=T) 
+  
+
+Functional_Groups<-read.csv("FunctionalGroups.csv")
+
 #### Formatting and Cleaning ID Data ####
 
 ID_20<-ID_Data_20 %>% 
@@ -146,7 +152,6 @@ ID_Data_Official<-ID_20 %>%
   rbind(ID_22) %>% 
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-"))
-
 
 #### Abundance by Count ####
 Abundance<-ID_Data_Official %>% 
@@ -264,6 +269,35 @@ Weight_Data_Official<-Weight_20 %>%
   filter(!is.na(Dry_Weight_g)) %>% 
   separate(Coll_Year_Bl_Trt_Pl, c("Coll_Year_Bl_Trt","Plot"), "-") 
 
+
+
+#### Formatting and Cleaning Plant Species Data ####
+#Create Long dataframe from wide dataframe and fix species issues
+LongCov_SpComp<-gather(PlantComp,key="species","cover",12:70) %>% 
+  dplyr::select(block,plot,grazing_treatment,added_total_excel,species,cover) %>% 
+  filter(!species %in% c("dung","moss","rock","lichen","mushroom","litter","bare_ground","final_total","final_total_excel","Longpod.mustard..Erysimum.asperum..","Lygo.deomia","basal.rosette" )) %>%
+  na.omit(cover) %>% 
+  filter(cover!=0)
+
+#Calculate Relative Cover
+Relative_Cover_PlantSp<-LongCov_SpComp%>%
+  #In the data sheet Relative_Cover, add a new column called "Relative_Cover", in which you divide "cover" by "Total_Cover"
+  mutate(Relative_Cover=(cover/added_total_excel)*100) %>% 
+  dplyr::select(block,plot,grazing_treatment,species,Relative_Cover)
+
+#make plot a factor not an integer
+Relative_Cover_PlantSp$plot<-as.factor(Relative_Cover_PlantSp$plot)
+
+Relative_Cover_PlantSp_Clean<-Relative_Cover_PlantSp%>% 
+  #change species codes to full species names
+  mutate(Genus_Species=ifelse(species=="ALDE","Alyssum.desertorum",ifelse(species=="ANOC","Androsace.occidentalis",ifelse(species=="ANPA","Antennaria.parvifolia", ifelse(species=="ARDR","Artemisia.dracunculus",ifelse(species=="ARFR","Artemisia.frigida",ifelse(species=="ARPU","Aristida.purpurea",ifelse(species=="ASGR","Astragalus.gracilis",ifelse(species=="ASPU","Astragalus.purshii",ifelse(species=="BODA","Bouteloua.dactyloides",ifelse(species=="BOGR" ,"Bouteloua.gracilis",ifelse(species=="BRAR","Bromus.arvensis",ifelse(species=="BRTE","Bromus.tectorum",ifelse(species=="CADU","Carex.duriuscula",ifelse(species=="CAFI","Carex.filifolia",ifelse(species=="CHPR","Chenopodium.pratericola",ifelse(species=="COCA","Conyza.canadensis",ifelse(species=="DEPI","Descurainia.pinnata",ifelse(species=="HECO","Hesperostipa.comata",ifelse(species=="VUOC","Vulpia.octoflora",ifelse(species=="KOMA","Koeleria.macrantha",ifelse(species=="LOAR","Logfia.arvensis",ifelse(species=="LYJU","Lygodesmia.juncea",ifelse(species=="DRRE","Draba.reptans",ifelse(species=="HEHI","Hedeoma.hispida",ifelse(species=="LEDE","Lepidium.densiflorum",ifelse(species=="LIIN","Lithospermum.incisum",ifelse(species=="LIPU","Liatris.punctata",ifelse(species=="PEES","Pediomelum.esculentum", ifelse(species=="SPCR","Sporobolus.cryptandrus",ifelse(species=="POSE","Poa.secunda",ifelse(species=="SPCO","Sphaeralcea.coccinea",ifelse(species=="TRDU","Tragopogon.dubius",ifelse(species=="TAOF","Taraxacum.officinale",ifelse(species=="OESU","Oenotherea.suffrutescens", ifelse(species=="PASM","Pascopyrum.smithii",ifelse(species=="PLPA","Plantago.patagonica",ifelse(species== "OPPO","Opuntia.polyacantha",ifelse(species=="DECA","Dalea.candida",species))))))))))))))))))))))))))))))))))))))) %>% 
+  dplyr::select(block,plot,grazing_treatment,Genus_Species,Relative_Cover) %>% 
+  unique()
+
+#Merge Relative Cover data and functional group data
+RelCov_FunctionalGroups<-Relative_Cover_PlantSp_Clean %>% 
+  full_join(Functional_Groups, relationship="many-to-many") %>% 
+  filter(Relative_Cover!="NA")
 
 #### Arthropod Abundance (Weight): Plot Level ####
 
@@ -2174,3 +2208,147 @@ Dispersion_Results_Grazing_D__OrthopteraGenus <- betadisper(BC_Distance_Matrix_D
 permutest(Dispersion_Results_Grazing_D__OrthopteraGenus,pairwise = T, permutations = 999) 
 #
 
+
+
+#### Plant Species Analysis 
+
+#### Calculate Community Metrics ####
+# uses codyn package and finds shannon's diversity 
+
+#FK Diversity
+Diversity_PlantSp <- community_diversity(df = RelCov_FunctionalGroups,
+                                           replicate.var = "plot",
+                                           abundance.var = "Relative_Cover")
+#FK Evenness
+Structure_PlantSp <- community_structure(df = RelCov_FunctionalGroups,
+                                         replicate.var = "plot",
+                                         abundance.var = "Relative_Cover",
+                                           metric = "Evar") 
+
+#Make a new data frame from "Extra_Species_Identity" to generate richness values for each research area
+Richness_PlantSp<-RelCov_FunctionalGroups %>%  
+  #group data frame by Watershed and exclosure
+  group_by(grazing_treatment,plot,block) %>%
+  #Make a new column named "Richness" and add the unique number of rows in the column "taxa" according to the groupings
+  summarise(richness=length(Genus_Species)) %>%
+  #stop grouping by watershed and exclosure
+  ungroup()
+
+#join the datasets
+CommunityMetrics_PlantSp <- Diversity_PlantSp %>%
+  full_join(Structure_PlantSp) %>% 
+  select(-richness) %>% 
+  full_join(Richness_PlantSp)
+
+#make dataframe with averages
+CommunityMetrics_PlantSp_Avg<-CommunityMetrics_PlantSp  %>% 
+  group_by(grazing_treatment) %>%
+  summarize(Richness_Std=sd(richness),Richness_Mean=mean(richness),Richness_n=length(richness),
+            Shannon_Std=sd(Shannon),Shannon_Mean=mean(Shannon),Shannon_n=length(Shannon),
+            Evar_Std=sd(Evar,na.rm=T),Evar_Mean=mean(Evar,na.rm=T),Evar_n=length(Evar))%>%
+  mutate(Richness_St_Error=Richness_Std/sqrt(Richness_n),
+         Shannon_St_Error=Shannon_Std/sqrt(Shannon_n),
+         Evar_St_Error=Evar_Std/sqrt(Evar_n)) %>% 
+  ungroup()
+
+#### Plant Species Community Metrics Graphs ####
+# 2022 - Dvac
+Richness_PlantSp<-ggplot(CommunityMetrics_PlantSp_Avg,aes(x=grazing_treatment,y=Richness_Mean,fill=grazing_treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Richness_Mean-Richness_St_Error,ymax=Richness_Mean+Richness_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Richness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=20)+
+  scale_y_continuous(labels = label_number(accuracy = 1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))
+  #geom_text(x=0.85, y=20, label="2022 Richness",size=20)
+
+# 2022 - Dvac
+Shannon_PlantSp<-ggplot(CommunityMetrics_PlantSp_Avg,aes(x=grazing_treatment,y=Shannon_Mean,fill=grazing_treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon's Diversity")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=3)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))
+  #geom_text(x=0.85, y=3, label="2022 Shannon's",size=20)
+
+# 2022 - Weight
+Evar_PlantSp<-ggplot(CommunityMetrics_PlantSp_Avg,aes(x=grazing_treatment,y=Evar_Mean,fill=grazing_treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Evar_Mean-Evar_St_Error,ymax=Evar_Mean+Evar_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Evenness")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.6)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))
+  #geom_text(x=0.85, y=1, label="2022 Weight",size=20)
+
+#### Create Community Metrics Graph for Plant Species ####
+Richness_PlantSp+
+  Shannon_PlantSp+
+  Evar_PlantSp+
+  plot_layout(ncol = 3,nrow = 1)
+
+#### Plant Species Community Metrics: Normaility
+#Richness
+Richness_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(richness)  ~ grazing_treatment)
+ols_plot_resid_hist(Richness_PlantSp_Norm) 
+ols_test_normality(Richness_PlantSp_Norm) #normal
+
+#Shannon
+Shannon_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(Shannon)  ~ grazing_treatment)
+ols_plot_resid_hist(Shannon_PlantSp_Norm) 
+ols_test_normality(Shannon_PlantSp_Norm) #normal
+
+#Evar
+Evar_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(Evar)  ~ grazing_treatment)
+ols_plot_resid_hist(Evar_PlantSp_Norm) 
+ols_test_normality(Evar_PlantSp_Norm) #normal
+
+
+#### Glmm for Plant species community metrics ####
+
+# Richness
+Richness_PlantSp_Glmm <- lmer((richness) ~ grazing_treatment + (1 | block) , data = CommunityMetrics_PlantSp)
+anova(Richness_PlantSp_Glmm) #not significant
+
+# Shannon
+Shannon_PlantSp_Glmm <- lmer((Shannon) ~ grazing_treatment + (1 | block) , data = CommunityMetrics_PlantSp)
+anova(Shannon_PlantSp_Glmm) #0.003476
+# post hoc test for lmer test
+summary(glht(Shannon_PlantSp_Glmm, linfct = mcp(grazing_treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.16341), #LG-HG (8.98e-05), NG-HG (0.00815)
+
+# Evar
+Evar_PlantSp_Glmm <- lmer((Evar) ~ grazing_treatment + (1 | block) , data = CommunityMetrics_PlantSp)
+anova(Evar_PlantSp_Glmm) #0.01525
+# post hoc test for lmer test
+summary(glht(Evar_PlantSp_Glmm, linfct = mcp(grazing_treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.67105), #LG-HG (0.00606), NG-HG (0.01163)
