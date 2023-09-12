@@ -147,6 +147,7 @@ ID_Data_Official<-ID_20 %>%
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
   mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-"))
 
+
 #### Abundance by Count ####
 Abundance<-ID_Data_Official %>% 
   group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot,Correct_Order) %>% 
@@ -579,8 +580,6 @@ Weight_Plot_WGrasshoppers_2020<-ggplot(subset(Weight_Total_Order,Year==2020),aes
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=0.5)+
@@ -601,8 +600,6 @@ Weight_Plot_WGrasshoppers_2021<-ggplot(subset(Weight_Total_Order,Year==2021),aes
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=0.2)+
@@ -623,8 +620,6 @@ Weight_Plot_WGrasshoppers_2022<-ggplot(subset(Weight_Total_Order,Year==2022),aes
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=0.1)+
@@ -653,8 +648,6 @@ Count_WGrasshoppers_2020<-ggplot(subset(Abundance_Total_Order,Year==2020),aes(x=
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=25)+
@@ -675,8 +668,6 @@ Count_WGrasshoppers_2021<-ggplot(subset(Abundance_Total_Order,Year==2021),aes(x=
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=20)+
@@ -697,8 +688,6 @@ Count_WGrasshoppers_2022<-ggplot(subset(Abundance_Total_Order,Year==2022),aes(x=
   theme(legend.background=element_blank())+
   scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
-  scale_pattern_manual(name='Correct_Order',values = c('Plot' = "none",
-                                                       'Orthoptera'="stripe")) +
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
   expand_limits(y=250)+
@@ -713,11 +702,168 @@ Count_WGrasshoppers_2020 +
   plot_layout(ncol = 3,nrow = 1)
 #Save at 4500x2000
 
-Dvac_2020_Order+  
-  Dvac_2021_Order+
-  Dvac_2022_Order+
+#### Order Relative Weight ####
+
+Relative_Weight<-Weight_Data_Summed %>% 
+  filter(Plot!="NA") %>% 
+  #add together all data of each orders across grazing treatments 
+  group_by(Year,Grazing_Treatment,Correct_Order) %>% 
+  mutate(Order_Weight=sum(Dry_Weight_g)) %>%
+  ungroup() %>% 
+  #add together all data within each grazing treatment for total "plot" weight
+  group_by(Year,Grazing_Treatment) %>% 
+  mutate(Total_Weight=sum(Dry_Weight_g)) %>%
+  ungroup() %>% 
+  select(Year,Grazing_Treatment,Correct_Order,Order_Weight,Total_Weight) %>% 
+  unique() %>% 
+  filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts") %>% 
+  mutate(RelativeWeight=Order_Weight/Total_Weight*100) %>% 
+  group_by(Year,Grazing_Treatment,Correct_Order) %>% 
+  summarise(Average_RelativeWeight=mean(RelativeWeight)) %>% 
+  ungroup()
+
+#### Order Relative Weight Plot ####
+Order_2020<-ggplot(subset(Relative_Weight,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+    geom_bar(stat="identity")+
+    #Label the x-axis "Treatment"
+    xlab("Grazing Treatment")+
+    #Label the y-axis "Species Richness"
+    ylab("Average Relative Weight (g)")+
+    theme(legend.background=element_blank())+
+    scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+    #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+    theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+    #Make the y-axis extend to 50
+    expand_limits(y=100)+
+    scale_y_continuous(labels = label_number(accuracy = 0.01))+
+    theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+    geom_text(x=0.85, y=100, label="2020",size=20)
+
+Order_2021<-ggplot(subset(Relative_Weight,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Relative Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=100)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=100, label="2021",size=20)
+
+Order_2022<-ggplot(subset(Relative_Weight,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Relative Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=100)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=100, label="2022",size=20)
+  
+#### Create Relative Weight Figure ####
+Order_2020 +  
+  Order_2021+
+  Order_2022 +
   plot_layout(ncol = 3,nrow = 1)
-#Save at 4500x3000
+#save at 4500 x 2000
+
+#### Order Relative Count ####
+
+Relative_Count<-Abundance %>% 
+  filter(Plot!="NA") %>% 
+  select(Year,Block,Grazing_Treatment,Plot,Correct_Order,Abundance) %>% 
+  unique() %>% 
+  #add together all data of each orders across grazing treatments 
+  group_by(Year,Grazing_Treatment,Correct_Order) %>% 
+  mutate(Order_Abundance=sum(Abundance)) %>%
+  ungroup() %>% 
+  #add together all data within each grazing treatment for total "plot"count
+  group_by(Year,Grazing_Treatment) %>% 
+  mutate(Total_Abundance=sum(Abundance)) %>%
+  ungroup() %>% 
+  select(Year,Grazing_Treatment,Correct_Order,Order_Abundance,Total_Abundance) %>% 
+  unique() %>% 
+  filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts") %>% 
+  mutate(RelativeCount=Order_Abundance/Total_Abundance*100) %>% 
+  group_by(Year,Grazing_Treatment,Correct_Order) %>% 
+  summarise(Average_RelativeCount=mean(RelativeCount)) %>% 
+  ungroup()
+
+#### Order Relative Count Plot ####
+Order_Count_2020<-ggplot(subset(Relative_Count,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Relative Count")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=100)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=100, label="2020 Count",size=20)
+
+Order_Count_2021<-ggplot(subset(Relative_Count,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Relative Count (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#76948F"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=100)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=100, label="2021 Count",size=20)
+
+Order_Count_2022<-ggplot(subset(Relative_Count,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Relative Count (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("#661100","#CC6677","#DDCC77","#2D7947", "#4B4084","#7E69A0","#6B99C7","#76948F","#7B4B4E","#BCB9EC"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=100)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=100, label="2022 Count",size=20)
+
+#### Create Relative Count Figure ####
+Order_Count_2020 +  
+  Order_Count_2021+
+  Order_Count_2022 +
+  plot_layout(ncol = 3,nrow = 1)
+#save at 4500 x 2000
+
 
 #### Total Plot Weight Differences by Order - Figures ####
 #Colors:
