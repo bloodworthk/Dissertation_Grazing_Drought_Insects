@@ -2438,5 +2438,126 @@ print(PerMANOVA2_PlantSp)  #NS
 BC_Distance_Matrix_PlantSp <- vegdist(Species_Matrix_PlantSp)
 #Run a dissimilarity matrix (PermDisp) comparing grazing treatment
 Dispersion_Results_PlantSp <- betadisper(BC_Distance_Matrix_PlantSp,RelCov_FunctionalGroups_Wide$grazing_treatment)
-permutest(Dispersion_Results_PlantSp,pairwise = T, permutations = 999) 
-#
+permutest(Dispersion_Results_PlantSp,pairwise = T, permutations = 999) #NS
+
+
+#### Relative Cover Figure
+
+FG_RelCov_Avg<-RelCov_FunctionalGroups %>% 
+  group_by(grazing_treatment) %>%
+  summarize(RelCov_Std=sd(Relative_Cover),RelCov_Mean=mean(Relative_Cover),RelCov_n=length(Relative_Cover))%>%
+  mutate(RelCov_St_Error=RelCov_Std/sqrt(RelCov_n)) %>% 
+  ungroup()
+
+
+#Rel Cov
+ggplot(FG_RelCov_Avg,aes(x=grazing_treatment,y=RelCov_Mean,fill=grazing_treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=RelCov_Mean-RelCov_St_Error,ymax=RelCov_Mean+RelCov_St_Error),position=position_dodge(),width=0.2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Treatment")+
+  #Label the y-axis "Species Evar"
+  ylab("Relative Cover (%)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels=c("HG"="High Impact Grazing","LG"="Destock","NG"="Cattle Removal"),limits=c("NG","LG","HG"))+
+  scale_fill_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = .01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))
+  #geom_text(x=0.85, y=1, label="2020 Count",size=20)
+
+#### Relative Cover Normality ####
+Normality_RelCov<- lm(data = FG_RelCov, log(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_RelCov) 
+ols_test_normality(Normality_RelCov) #not great but okay
+
+#### Relative Cover Stats ####
+RelCov_GLMM <- lmerTest::lmer(data = FG_RelCov, log(Relative_Cover) ~ grazing_treatment + (1|block))
+anova(RelCov_GLMM, type = 3) #0.03647
+# post hoc test for lmer test
+summary(glht(RelCov_GLMM, linfct = mcp(grazing_treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.5056), #LG-HG (0.1093), NG-HG (0.0351)
+
+#### Relative Cover of Functional Group ####
+FG_RelCov<-RelCov_FunctionalGroups %>% 
+  mutate(Relative_Cover=Relative_Cover/100) 
+
+### Normality ####
+
+#Forbs
+Normality_Forb<- lm(data = subset(FG_RelCov, Functional_Group=="Forb"), 1/(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_Forb) 
+ols_test_normality(Normality_Forb) #not great but okay
+
+#C4
+Normality_C4<- lm(data = subset(FG_RelCov, Functional_Group=="C4"), log(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_C4) 
+ols_test_normality(Normality_C4) #normalish
+
+#C3
+Normality_C3<- lm(data = subset(FG_RelCov, Functional_Group=="C3"), log(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_C3) 
+ols_test_normality(Normality_C3) #normalish
+
+#Brome
+Normality_Brome<- lm(data = subset(FG_RelCov, Functional_Group=="Brome"), log(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_Brome) 
+ols_test_normality(Normality_Brome) #normalish
+
+#Woody
+Normality_Woody<- lm(data = subset(FG_RelCov, Functional_Group=="Woody"), log(Relative_Cover)  ~ grazing_treatment)
+ols_plot_resid_hist(Normality_Woody) 
+ols_test_normality(Normality_Woody) #normalish
+
+#### Stats: Functional Groups ####
+
+#Forbs
+Forbs_GLMM <- lmerTest::lmer(data = subset(FG_RelCov, Functional_Group=="Forb"), 1/(Relative_Cover)  ~ grazing_treatment + (1|block))
+anova(Forbs_GLMM) #ns
+
+#C4
+C4_GLMM <- lmerTest::lmer(data = subset(FG_RelCov, Functional_Group=="C4"), log(Relative_Cover)  ~ grazing_treatment + (1|block))
+anova(C4_GLMM) #ns
+
+#C3
+C3_GLMM <- lmerTest::lmer(data = subset(FG_RelCov, Functional_Group=="C3"), log(Relative_Cover)  ~ grazing_treatment + (1|block))
+anova(C3_GLMM) #ns
+
+#Brome
+Brome_GLMM <- lmerTest::lmer(data = subset(FG_RelCov, Functional_Group=="Brome"), log(Relative_Cover)  ~ grazing_treatment + (1|block))
+anova(Brome_GLMM) #ns
+
+#Woody
+Woody_GLMM <- lmerTest::lmer(data = subset(FG_RelCov, Functional_Group=="Woody"), log(Relative_Cover)  ~ grazing_treatment + (1|block))
+anova(Woody_GLMM) #ns
+
+
+#### Rank Abundance Curves: Plant Species ####
+Rank_Abundance <- FG_RelCov  %>%
+  mutate(Relative_Cover=Relative_Cover*100) %>% 
+  group_by(grazing_treatment,Genus_Species,Native_Introduced,Annual_Perennial,Functional_Group) %>% 
+  summarize(avg_cover=mean(Relative_Cover))%>%
+  ungroup()%>%
+  arrange(grazing_treatment, -avg_cover)%>% 
+  group_by(grazing_treatment)%>%
+  mutate(rank=seq_along(grazing_treatment))%>%
+  ungroup()
+
+ggplot(data=Rank_Abundance, aes(x=rank, y=avg_cover)) +
+  geom_line() +
+  geom_point(size=3) +
+  geom_point(aes(color=Native_Introduced,shape=Native_Introduced),size=3) +
+  xlab('') +
+  ylab('Relative Cover (%)') +
+  # scale_x_continuous(expand=c(0,0), limits=c(0.5,17), breaks=seq(0,17,5)) +
+  # scale_y_continuous(expand=c(0,0), limits=c(0,60), breaks=seq(0,60,10)) +
+  geom_text(aes(y=avg_cover+1.2, x=rank+0.1, label=Genus_Species), hjust='left', vjust='center', angle=90, size=4)+
+  expand_limits(y=100)+
+  theme(legend.position = "none")+
+  facet_grid(~grazing_treatment)
+#save at 1500 x 1000
+
+  
