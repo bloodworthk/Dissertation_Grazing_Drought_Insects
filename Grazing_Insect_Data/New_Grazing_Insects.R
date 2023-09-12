@@ -2352,3 +2352,91 @@ Evar_PlantSp_Glmm <- lmer((Evar) ~ grazing_treatment + (1 | block) , data = Comm
 anova(Evar_PlantSp_Glmm) #0.01525
 # post hoc test for lmer test
 summary(glht(Evar_PlantSp_Glmm, linfct = mcp(grazing_treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.67105), #LG-HG (0.00606), NG-HG (0.01163)
+
+#### NMDS for Plant Community
+RelCov_FunctionalGroups_Wide<-RelCov_FunctionalGroups %>%
+  select(-c(Native_Introduced,Functional_Group,Annual_Perennial,Common.Name)) %>% 
+  spread(key=Genus_Species,value=Relative_Cover, fill=0) 
+
+#### Make new data frame called BC_Data and run an NMDS 
+
+#dvac
+BC_Data_PlantSp <- metaMDS(RelCov_FunctionalGroups_Wide[,4:41])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_PlantSp, RelCov_FunctionalGroups_Wide, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order Count
+sites <- 1:nrow(RelCov_FunctionalGroups_Wide)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_PlantSp <- RelCov_FunctionalGroups_Wide[,1:3] 
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_PlantSp$points,col=as.factor(BC_Meta_Data_PlantSp$grazing_treatment))
+
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_PlantSp,groups = as.factor(BC_Meta_Data_PlantSp$grazing_treatment),kind = "sd",display = "sites", label = T)
+
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_PlantSp = data.frame(MDS1 = BC_Data_PlantSp$points[,1], MDS2 = BC_Data_PlantSp$points[,2],group=BC_Meta_Data_PlantSp$grazing_treatment)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_PlantSp <- cbind(BC_Meta_Data_PlantSp,BC_NMDS_PlantSp)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_PlantSp<-ordiellipse(BC_Data_PlantSp, BC_Meta_Data_PlantSp$grazing_treatment, display = "sites",
+                                   kind = "sd", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_PlantSp <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_PlantSp$group)){
+  BC_Ellipses_PlantSp <- rbind(BC_Ellipses_PlantSp, cbind(as.data.frame(with(BC_NMDS_PlantSp[BC_NMDS_PlantSp$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_PlantSp[[g]]$cov,BC_Ord_Ellipses_PlantSp[[g]]$center,BC_Ord_Ellipses_PlantSp[[g]]$scale)))
+                                                      ,group=g))
+}
+
+#### NMDS Figures: Plant Community ####
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = BC_NMDS_Graph_PlantSp, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_PlantSp, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  scale_color_manual(values=c("thistle2","thistle3","thistle4"), labels=c("High Impact Grazing","Cattle Removal","Destock"),limits=c("NG","LG","HG"))+
+  scale_linetype_manual(values=c(1,2,3),labels=c("High Impact Grazing","Cattle Removal","Destock"),limits=c("NG","LG","HG"))+
+  scale_shape_manual(values=c(15,16,17),labels=c("High Impact Grazing","Cattle Removal","Destock"),limits=c("NG","LG","HG"))+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=1),colour=guide_legend(ncol=1),linetype=guide_legend(ncol=1))+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"))+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40))
+  #annotate(geom="text", x=-2, y=0.8, label="Count",size=20)
+#export at 2000 x 1800
+
+#### PERMANOVA: Plant Community  ####
+
+##PerMANOVA
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_PlantSp <- RelCov_FunctionalGroups_Wide[,4:ncol(RelCov_FunctionalGroups_Wide)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_PlantSp <- RelCov_FunctionalGroups_Wide[,1:3]
+
+Environment_Matrix_PlantSp$Grazing_Treatment_Fact=as.factor(Environment_Matrix_PlantSp$grazing_treatment)
+Environment_Matrix_PlantSp$Block_Fact=as.numeric(Environment_Matrix_PlantSp$block)
+Environment_Matrix_PlantSp$Plot_Fact=as.factor(Environment_Matrix_PlantSp$plot)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_PlantSp <- adonis2(formula = Species_Matrix_PlantSp~Grazing_Treatment_Fact + (1 | Block_Fact) , data=Environment_Matrix_PlantSp,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_PlantSp)  #NS
+
+#### PERMDISP: Plant Community  ####
+#Dvac
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_PlantSp <- vegdist(Species_Matrix_PlantSp)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_PlantSp <- betadisper(BC_Distance_Matrix_PlantSp,RelCov_FunctionalGroups_Wide$grazing_treatment)
+permutest(Dispersion_Results_PlantSp,pairwise = T, permutations = 999) 
+#
