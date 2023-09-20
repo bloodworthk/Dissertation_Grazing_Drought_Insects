@@ -147,7 +147,12 @@ ID_Data_Official<-ID_20 %>%
   rbind(ID_21) %>% 
   rbind(ID_22) %>% 
   mutate(Coll_Year_Bl_Trt=paste(Collection_Method,Year,Block,Grazing_Treatment,sep = "_")) %>% 
-  mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-"))
+  mutate(Coll_Year_Bl_Trt_Pl=paste(Coll_Year_Bl_Trt,Plot,sep = "-")) %>% 
+  mutate(Order_Family=paste(Correct_Order,Correct_Family,sep="_")) %>% 
+  #fix remaining issues
+  mutate(Correct_Family=ifelse(Correct_Family=="thomisidae","Thomisidae",ifelse(Correct_Family=="curculionidae","Curculionidae",ifelse(Correct_Family=="Staphylindae","Staphylinidae",ifelse(Correct_Family=="unknown","Unknown",ifelse(Order_Family=="Araneae_Lygaeidae","Lycosidae",Correct_Family)))))) %>% 
+    mutate(Correct_Order=ifelse(Order_Family=="Coleoptera_Scutelleridae","Hemiptera",ifelse(Order_Family=="Hemiptera_Latridiidae","Coleoptera",ifelse(Order_Family=="Diptera_Platygastridae","Hymenoptera",Correct_Order)))) %>% 
+    select(-Order_Family)
 
 #### Abundance by Count ####
 Abundance<-ID_Data_Official %>% 
@@ -165,6 +170,7 @@ Abundance_Plot<-ID_Data_Official %>%
 Abundance_Order<-Abundance %>% 
   select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Plot,Abundance) %>% 
   unique() 
+
 
 #### Formatting and Cleaning Weight Data ####
 
