@@ -1454,6 +1454,25 @@ summary(glht(RelCov_GLMM, linfct = mcp(grazing_treatment = "Tukey")), test = adj
 
 #### Feeding Guild Graph ####
 
+Relative_Count_Family_Plot<-Abundance_Family %>% 
+  filter(Plot!="NA" & Correct_Family!="NA") %>% 
+  filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
+  select(Year,Block,Grazing_Treatment,Plot,Correct_Order,Correct_Family,Feeding.Guild,Abundance) %>% 
+  unique() %>% 
+  #add together all data of each orders across grazing treatments 
+  group_by(Year,Grazing_Treatment,Feeding.Guild,Plot) %>% 
+  mutate(FeedingGuild_Abundance=sum(Abundance)) %>%
+  ungroup() %>% 
+  #add together all data within each grazing treatment for total "plot"count
+  group_by(Year,Grazing_Treatment,Plot) %>% 
+  mutate(Total_Abundance=sum(Abundance)) %>%
+  ungroup() %>% 
+  select(Year,Block,Grazing_Treatment,Feeding.Guild,FeedingGuild_Abundance,Total_Abundance,Plot) %>% 
+  unique() %>% 
+  mutate(RelativeCount=FeedingGuild_Abundance/Total_Abundance) %>% 
+  mutate(Feeding_Guild_Graph=ifelse(Feeding.Guild=="Insectivores","Predators",ifelse(Feeding.Guild=="","Other",ifelse(Feeding.Guild=="Multi","Other",ifelse(Feeding.Guild=="necrophagous","Scavenger",ifelse(Feeding.Guild=="parasitoids","Parasitoids",ifelse(Feeding.Guild=="phytophagous","Herbivores",Feeding.Guild))))))) %>% 
+  mutate(Trtm=paste(Grazing_Treatment,Feeding_Guild_Graph,sep = "_"))
+
 Relative_Count_Family<-Abundance_Family %>% 
   filter(Plot!="NA" & Correct_Family!="NA") %>% 
   filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
@@ -1534,6 +1553,34 @@ Feeding_Guild_2022<-ggplot(subset(Relative_Count_Family,Year==2022),aes(x=Grazin
 #### Create Feeding Guild Graph ####
 Feeding_Guild_2020+
   Feeding_Guild_2021+
-  Feeding_Guild_2022
+  Feeding_Guild_2022+
   plot_layout(ncol = 3,nrow = 1)
 #Save at 3000x2000
+
+  
+#### Normality: Relative Count Family ####
+
+Normality_RelCov_Family_2020<- lm(data = subset(Relative_Count_Family_Plot, Year=="2020"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
+ols_plot_resid_hist(Normality_RelCov_Family_2020) 
+ols_test_normality(Normality_RelCov_Family_2020) #normal
+
+Normality_RelCov_Family_2021<- lm(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
+ols_plot_resid_hist(Normality_RelCov_Family_2021) 
+ols_test_normality(Normality_RelCov_Family_2021) #normal
+
+Normality_RelCov_Family_2022<- lm(data = subset(Relative_Count_Family_Plot, Year=="2022"),log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
+ols_plot_resid_hist(Normality_RelCov_Family_2022) 
+ols_test_normality(Normality_RelCov_Family_2022) #normal
+  
+#### Relative Cover Stats ####
+RelCov_Family_2020 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2020"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
+anova(RelCov_Family_2020, type = 3) #feeding guild (<2e-16)
+
+RelCov_Family_2021 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
+anova(RelCov_Family_2021, type = 3) #grazing (0.05), feeding guild (2e-16), grazing:feeding guild (0.01619)
+RelCov_Family_2021_Trtm <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Trtm + (1|Block))
+anova(RelCov_Family_2021_Trtm, type = 3)
+summary(glht(RelCov_Family_2021_Trtm, linfct = mcp(Trtm = "Tukey")), test = adjusted(type = "BH"))
+
+RelCov_Family_2022 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2022"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
+anova(RelCov_Family_2022, type = 3) #grazing (0.02075), feeding guild (2e-16)
