@@ -12,6 +12,10 @@ library(tidyverse)
 library(olsrr)
 library(patchwork)
 library(codyn)
+#install.packages('devtools')
+library(devtools)
+#install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+#install.packages("pairwiseAdonis")
 library(pairwiseAdonis)
 library(ggpattern)
 
@@ -156,7 +160,7 @@ ID_Data_Official<-ID_20 %>%
   #fix remaining issues
   mutate(Correct_Family=ifelse(Correct_Family=="thomisidae","Thomisidae",ifelse(Correct_Family=="curculionidae","Curculionidae",ifelse(Correct_Family=="Staphylindae","Staphylinidae",ifelse(Correct_Family=="unknown","Unknown",ifelse(Order_Family=="Araneae_Lygaeidae","Lycosidae",Correct_Family)))))) %>% 
     mutate(Correct_Order=ifelse(Order_Family=="Coleoptera_Scutelleridae","Hemiptera",ifelse(Order_Family=="Hemiptera_Latridiidae","Coleoptera",ifelse(Order_Family=="Diptera_Platygastridae","Hymenoptera",Correct_Order)))) %>% 
-    select(-Order_Family)
+    dplyr::select(-Order_Family)
 
 #### Abundance by Count ####
 Abundance<-ID_Data_Official %>% 
@@ -168,11 +172,11 @@ Abundance_Plot<-ID_Data_Official %>%
   group_by(Collection_Method,Year,Block,Grazing_Treatment,Plot) %>% 
   mutate(Plot_Abundance=length(Sample_Number)) %>% 
   ungroup() %>% 
-  select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Plot_Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Plot,Plot_Abundance) %>% 
   unique()
 
 Abundance_Order<-Abundance %>% 
-  select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Plot,Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Plot,Abundance) %>% 
   unique() 
 
 #### Abundance by Count: Family ####
@@ -181,12 +185,12 @@ Abundance_Family<-ID_Data_Official %>%
   mutate(Abundance=length(Sample_Number)) %>% 
   ungroup() %>% 
   left_join(Feeding) %>% 
-  select(Collection_Method,Year,Block,Plot, Grazing_Treatment,Correct_Order,Correct_Family, Feeding.Guild,Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Plot, Grazing_Treatment,Correct_Order,Correct_Family, Feeding.Guild,Abundance) %>% 
   unique() 
 
 
 Abundance_Family<-Abundance %>% 
-  select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Correct_Family, Plot,Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Correct_Family, Plot,Abundance) %>% 
   unique() 
 
 
@@ -1441,12 +1445,12 @@ Dispersion_Results_PlantSp <- betadisper(BC_Distance_Matrix_PlantSp,RelCov_Funct
 permutest(Dispersion_Results_PlantSp,pairwise = T, permutations = 999) #NS
 
 #### Normality: Relative Plant Community####
-Normality_RelCov<- lm(data = FG_RelCov, log(Relative_Cover)  ~ grazing_treatment)
+Normality_RelCov<- lm(data = RelCov_FunctionalGroups , log(Relative_Cover)  ~ grazing_treatment)
 ols_plot_resid_hist(Normality_RelCov) 
 ols_test_normality(Normality_RelCov) #not great but okay
 
 #### Stats: Plant Relative Cover ####
-RelCov_GLMM <- lmerTest::lmer(data = FG_RelCov, log(Relative_Cover) ~ grazing_treatment + (1|block))
+RelCov_GLMM <- lmerTest::lmer(data = RelCov_FunctionalGroups , log(Relative_Cover) ~ grazing_treatment + (1|block))
 anova(RelCov_GLMM, type = 3) #0.03647
 # post hoc test for lmer test
 summary(glht(RelCov_GLMM, linfct = mcp(grazing_treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.5056), #LG-HG (0.1093), NG-HG (0.0351)
@@ -1558,7 +1562,7 @@ Feeding_Guild_2020+
 #Save at 3000x2000
 
   
-#### Normality: Relative Count Family ####
+#### Normality: Feeding_Guild Family ####
 
 Normality_RelCov_Family_2020<- lm(data = subset(Relative_Count_Family_Plot, Year=="2020"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2020) 
@@ -1572,7 +1576,7 @@ Normality_RelCov_Family_2022<- lm(data = subset(Relative_Count_Family_Plot, Year
 ols_plot_resid_hist(Normality_RelCov_Family_2022) 
 ols_test_normality(Normality_RelCov_Family_2022) #normal
   
-#### Relative Cover Stats ####
+#### Feeding Guild Stats ####
 RelCov_Family_2020 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2020"), sqrt(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
 anova(RelCov_Family_2020, type = 3) #feeding guild (<2e-16)
 
