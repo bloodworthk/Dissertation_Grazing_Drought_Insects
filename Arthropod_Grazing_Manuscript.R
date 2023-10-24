@@ -874,7 +874,7 @@ for(g in unique(BC_NMDS_Weight_Grazing$group)){
 
 ##NMDS Figure: Year
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-NMDS_Year<-ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   geom_point(size=6, stroke = 2) +
   geom_path(data = BC_Ellipses_Weight, aes(x=NMDS1, y=NMDS2), size=4)+
   labs(color  = "", linetype = "", shape = "")+
@@ -889,8 +889,7 @@ NMDS_Year<-ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,colo
   expand_limits(x=c(-2,2),y=c(-2,2))+
   scale_y_continuous(labels = label_number(accuracy = 1))+
   scale_x_continuous(labels = label_number(accuracy = 1))+
-  theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),axis.title.x = element_blank(),axis.text.x = element_blank(),legend.position=c(0.1,0.18))+
-  annotate(geom="text", x=-3, y=2, label="A.",size=20)
+  theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),axis.title.x = element_text(size = 55),axis.text.x = element_text(size = 55),legend.position=c(0.16,0.82))
   
 #annotate("text",x=-1,y=0,label="2020",size=20)+
   #annotate("text",x=0,y=0.3,label="2021",size=20)+
@@ -1591,6 +1590,9 @@ RelCov_Family_2022 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Y
 anova(RelCov_Family_2022, type = 3) #grazing (0.02075), feeding guild (2e-16)
 
 
+
+
+
 #### Averaging across paddocks before analyses ####
 #### New way of analyzing data - KR Suggestions ####
 #averaging plots by paddock (so replication will be 3 for each treatment)
@@ -1930,16 +1932,22 @@ Dvac_2020_Plot_Avg+
 dvac_2020_Weight_Avg <- lm(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2020), (Avg_Plot_Weight)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2020_Weight_Avg) 
 ols_test_normality(dvac_2020_Weight_Avg) #normal
+#check for homoscedascity
+leveneTest(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2020), (Avg_Plot_Weight)  ~ Grazing_Treatment) 
 
 #2021
 dvac_2021_Weight_Avg <- lm(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2021), (Avg_Plot_Weight)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2021_Weight_Avg) 
 ols_test_normality(dvac_2021_Weight_Avg) #normal
+#check for homoscedascity
+leveneTest(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2021), (Avg_Plot_Weight)  ~ Grazing_Treatment) 
 
 #2022
 dvac_2022_Weight_Avg <- lm(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2022), (Avg_Plot_Weight)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2022_Weight_Avg) 
 ols_test_normality(dvac_2022_Weight_Avg) #normal
+#check for homoscedascity
+leveneTest(data = subset(Weight_Data_Summed_dvac_Avg, Year == 2021), (Avg_Plot_Weight)  ~ Grazing_Treatment) 
 
 #### Stats: Plot Weights by Grazing Treatment####
 #2020
@@ -2096,16 +2104,22 @@ Shannon_2020_Weight_Avg+
 Weight_2020_OrderShannon <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2020),(Avg_Shannon)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2020_OrderShannon) 
 ols_test_normality(Weight_2020_OrderShannon) #normal
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2020),(Avg_Shannon)  ~ Grazing_Treatment) 
 
 # Weight 2021
 Weight_2021_OrderShannon <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2021),(Avg_Shannon)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2021_OrderShannon) 
 ols_test_normality(Weight_2021_OrderShannon) #normal
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2021),(Avg_Shannon)  ~ Grazing_Treatment)
 
 # Weight 2020
 Weight_2022_OrderShannon <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2022),(Avg_Shannon)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2022_OrderShannon) 
 ols_test_normality(Weight_2022_OrderShannon) #normal
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2022),(Avg_Shannon)  ~ Grazing_Treatment)
 
 #### Stats: Shannon's Diversity by Grazing Treatment: Weight####
 
@@ -2437,16 +2451,22 @@ Richness_2020_Avg+
 dvac_2020_OrderRichness_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2020 & Collection_Method=="dvac"),(Avg_richness)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2020_OrderRichness_Avg) 
 ols_test_normality(dvac_2020_OrderRichness_Avg) #normalish
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2020 & Collection_Method=="dvac"),(Avg_richness)  ~ Grazing_Treatment)
 
 # dvac 2021
 dvac_2021_OrderRichness_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2021 & Collection_Method=="dvac"),(Avg_richness)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2021_OrderRichness_Avg) 
 ols_test_normality(dvac_2021_OrderRichness_Avg) #normalish
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2021 & Collection_Method=="dvac"),(Avg_richness)  ~ Grazing_Treatment)
 
 # dvac 2022
 dvac_2022_OrderRichness_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2022 & Collection_Method=="dvac"), (Avg_richness)  ~ Grazing_Treatment)
 ols_plot_resid_hist(dvac_2022_OrderRichness_Avg) 
 ols_test_normality(dvac_2022_OrderRichness_Avg) #normal
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2022& Collection_Method=="dvac"),(Avg_richness)  ~ Grazing_Treatment)
 
 #### Stats: Richness ####
 
@@ -2468,16 +2488,23 @@ anova(OrderRichness_D_2022_Glmm_Avg) #not significant
 Weight_2020_OrderEvar_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2020 & Collection_Method=="dvac"),1/(Avg_Evar)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2020_OrderEvar_Avg) 
 ols_test_normality(Weight_2020_OrderEvar_Avg) #normalish
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2020 & Collection_Method=="dvac"),1/(Avg_Evar)  ~ Grazing_Treatment)
 
 # Weight 2021
 Weight_2021_OrderEvar_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2021 & Collection_Method=="dvac"),(Avg_Evar)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2021_OrderEvar_Avg) 
 ols_test_normality(Weight_2021_OrderEvar_Avg) #normalish
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2021 & Collection_Method=="dvac"),(Avg_Evar)  ~ Grazing_Treatment)
 
 # Weight 2022
 Weight_2022_OrderEvar_Avg <- lm(data = subset(CommunityMetrics_Weight_Avg, Year == 2022 & Collection_Method=="dvac"),(Avg_Evar)  ~ Grazing_Treatment)
 ols_plot_resid_hist(Weight_2022_OrderEvar_Avg) 
 ols_test_normality(Weight_2022_OrderEvar_Avg) #normalish
+#check for homoscedascity
+leveneTest(data = subset(CommunityMetrics_Weight_Avg, Year == 2022 & Collection_Method=="dvac"),(Avg_Evar)  ~ Grazing_Treatment)
+
 #### Stats: Evenness ####
 
 # 2020 Weight
@@ -2603,14 +2630,20 @@ Feeding_Guild_2020_Avg+
 Normality_RelCov_Family_2020_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2020_Avg) 
 ols_test_normality(Normality_RelCov_Family_2020_Avg) #normal
+#check for homoscedascity ---get NAs
+#leveneTest(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 
 Normality_RelCov_Family_2021_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), 1/log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2021_Avg) 
 ols_test_normality(Normality_RelCov_Family_2021_Avg) #normal
+#check for homoscedascity --- get NAs
+#leveneTest(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), 1/log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 
 Normality_RelCov_Family_2022_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"),1/log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2022_Avg) 
 ols_test_normality(Normality_RelCov_Family_2022_Avg) #normal
+#check for homoscedascity - get NAs
+#leveneTest(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), 1/log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 
 #### Feeding Guild Stats ####
 RelCov_Family_2020_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
@@ -3041,16 +3074,22 @@ Richness_PlantSp+
 Richness_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(richness)  ~ grazing_treatment)
 ols_plot_resid_hist(Richness_PlantSp_Norm) 
 ols_test_normality(Richness_PlantSp_Norm) #normal
+#check for homoscedascity
+leveneTest(data = CommunityMetrics_PlantSp,(richness)  ~ grazing_treatment)
 
 #Shannon
 Shannon_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(Shannon)  ~ grazing_treatment)
 ols_plot_resid_hist(Shannon_PlantSp_Norm) 
 ols_test_normality(Shannon_PlantSp_Norm) #normal
+#check for homoscedascity
+leveneTest(data = CommunityMetrics_PlantSp,(Shannon)  ~ grazing_treatment)
 
 #Evar
 Evar_PlantSp_Norm <- lm(data = CommunityMetrics_PlantSp,(Evar)  ~ grazing_treatment)
 ols_plot_resid_hist(Evar_PlantSp_Norm) 
 ols_test_normality(Evar_PlantSp_Norm) #normal
+#check for homoscedascity
+leveneTest(data = CommunityMetrics_PlantSp,(Evar)  ~ grazing_treatment)
 
 
 #### Stats: Plant Species Community Metrics####
@@ -3096,6 +3135,8 @@ permutest(Dispersion_Results_PlantSp,pairwise = T, permutations = 999) #NS
 Normality_RelCov<- lm(data = RelCov_FunctionalGroups_Avg ,log(Avg_Relative_Cover)  ~ grazing_treatment)
 ols_plot_resid_hist(Normality_RelCov) 
 ols_test_normality(Normality_RelCov) #not great but okay
+#check for homoscedascity
+leveneTest(data = RelCov_FunctionalGroups_Avg ,log(Avg_Relative_Cover)  ~ grazing_treatment)
 
 #### Stats: Plant Relative Cover ####
 RelCov_GLMM <- lmerTest::lmer(data = RelCov_FunctionalGroups_Avg , log(Avg_Relative_Cover) ~ grazing_treatment + (1|block))
