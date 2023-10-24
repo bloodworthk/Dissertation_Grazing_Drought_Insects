@@ -891,7 +891,8 @@ NMDS_Year<-ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,colo
   scale_x_continuous(labels = label_number(accuracy = 1))+
   theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),axis.title.x = element_blank(),axis.text.x = element_blank(),legend.position=c(0.1,0.18))+
   annotate(geom="text", x=-3, y=2, label="A.",size=20)
-  #annotate("text",x=-1,y=0,label="2020",size=20)+
+  
+#annotate("text",x=-1,y=0,label="2020",size=20)+
   #annotate("text",x=0,y=0.3,label="2021",size=20)+
   #annotate("text",x=0.2,y=-0,label="2022",size=20) 
 
@@ -1458,7 +1459,7 @@ summary(glht(RelCov_GLMM, linfct = mcp(grazing_treatment = "Tukey")), test = adj
 
 #### Feeding Guild Graph ####
 
-Relative_Count_Family_Plot<-Abundance_Family %>% 
+Relative_Count_Family_Plot<-Abundance_Family_Guild %>% 
   filter(Plot!="NA" & Correct_Family!="NA") %>% 
   filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
   select(Year,Block,Grazing_Treatment,Plot,Correct_Order,Correct_Family,Feeding.Guild,Abundance) %>% 
@@ -1477,7 +1478,7 @@ Relative_Count_Family_Plot<-Abundance_Family %>%
   mutate(Feeding_Guild_Graph=ifelse(Feeding.Guild=="Insectivores","Predators",ifelse(Feeding.Guild=="","Other",ifelse(Feeding.Guild=="Multi","Other",ifelse(Feeding.Guild=="necrophagous","Scavenger",ifelse(Feeding.Guild=="parasitoids","Parasitoids",ifelse(Feeding.Guild=="phytophagous","Herbivores",Feeding.Guild))))))) %>% 
   mutate(Trtm=paste(Grazing_Treatment,Feeding_Guild_Graph,sep = "_"))
 
-Relative_Count_Family<-Abundance_Family %>% 
+Relative_Count_Family<-Abundance_Family_Guild %>% 
   filter(Plot!="NA" & Correct_Family!="NA") %>% 
   filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
   select(Year,Block,Grazing_Treatment,Plot,Correct_Order,Correct_Family,Feeding.Guild,Abundance) %>% 
@@ -1619,7 +1620,7 @@ Abundance_Family_Avg<-Abundance_Family_Guild %>%
   group_by(Collection_Method,Year,Paddock,Correct_Order,Correct_Family,Feeding.Guild) %>% 
   mutate(Avg_Abundance=mean(Abundance))%>% 
   ungroup() %>% 
-  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Correct_Order,Correct_Family,Feeding.Guild,Avg_Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Paddock,Correct_Order,Correct_Family,Feeding.Guild,Avg_Abundance) %>% 
   unique() 
 
 ## Regular Abundance 
@@ -1956,16 +1957,16 @@ anova(Plot_Weight_D_2022_Glmm_Avg) #not significant
 
 #### Calculate Community Metrics: Weight Abundance ####
 # uses codyn package and finds shannon's diversity 
-Weight_Data_Summed_2_Avg<-Weight_Data_Summed_Avg 
+Weight_Data_Summed_2_Avg<-Weight_Data_Summed 
 Diversity_Weight_Avg <- community_diversity(df = Weight_Data_Summed_2_Avg,
                                             time.var = "Year",
-                                            replicate.var = c("Collection_Method","Block","Grazing_Treatment"),
-                                            abundance.var = "Avg_Dry_Weight_g")
+                                            replicate.var = c("Collection_Method","Block","Plot","Grazing_Treatment"),
+                                            abundance.var = "Dry_Weight_g")
 #Sweep Net Community Structure
 Structure_Weight_Avg <- community_structure(df = Weight_Data_Summed_2_Avg,
                                             time.var = "Year",
-                                            replicate.var = c("Collection_Method","Block","Grazing_Treatment"),
-                                            abundance.var = "Avg_Dry_Weight_g",
+                                            replicate.var = c("Collection_Method","Block","Plot","Grazing_Treatment"),
+                                            abundance.var = "Dry_Weight_g",
                                             metric = "Evar")
 
 #Make a new data frame from "Extra_Species_Identity" to generate richness values for each research area
@@ -1985,17 +1986,16 @@ Order_Richness_Weight_Avg<-ID_Data_Official %>%
   select(Collection_Method,Year,Block,Grazing_Treatment,Paddock,Avg_richness) %>% 
   unique()
 
-Order_Richness_Weight$Year=as.character(Order_Richness_Weight$Year)
-Order_Richness_Weight$Plot=as.character(Order_Richness_Weight$Plot)
+Order_Richness_Weight_Avg$Year=as.character(Order_Richness_Weight_Avg$Year)
 
 #join the datasets
-CommunityMetrics_Weight_Avg <- Diversity_Weight %>%
-  full_join(Structure_Weight) %>% 
+CommunityMetrics_Weight_Avg <- Diversity_Weight_Avg %>%
+  full_join(Structure_Weight_Avg) %>% 
   select(-richness) %>% 
-  full_join(Order_Richness_Weight) %>% 
+  full_join(Order_Richness_Weight_Avg) %>% 
   mutate(Paddock=paste(Block,Grazing_Treatment,sep="-")) %>% 
   group_by(Collection_Method,Year,Paddock) %>% 
-  mutate(Avg_richness=mean(richness)) %>% 
+  mutate(Avg_richness=mean(Avg_richness)) %>% 
   mutate(Avg_Evar=mean(Evar)) %>% 
   mutate(Avg_Shannon=mean(Shannon)) %>% 
   ungroup() %>% 
@@ -2175,10 +2175,12 @@ for(g in unique(BC_NMDS_Weight_Avg$group)){
 }
 
 #### NMDS: Weight: 2021 by Grazing ####
-
 BC_Meta_Data_Weight_Grazing_Avg <- Abundance_Wide_Weight_Avg[,1:5] %>% 
   mutate(Trt_Year=paste(Grazing_Treatment,Year,sep=".")) %>% 
   filter(Block!="NA")
+
+BC_Data_Weight_Grazing_Avg <- metaMDS(Abundance_Wide_Weight_Avg[,6:15])
+
 #make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
 plot(BC_Data_Weight_Avg$points,col=as.factor(BC_Meta_Data_Weight_Grazing_Avg$Trt_Year))
 
@@ -2622,5 +2624,197 @@ summary(glht(RelCov_Family_2021_Trtm_Avg, linfct = mcp(Trtm = "Tukey")), test = 
 
 RelCov_Family_2022_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
 anova(RelCov_Family_2022_Avg, type = 3) #grazing (0.02075), feeding guild (2e-16)
+
+#### NMDS using Count x Feeding Guild ####
+
+#Create wide relative cover dataframe
+#Change row 54 and 55 where we don't cant equate sample number to weight to be unique sample number so it can be used here
+#2020 block 1 NG, plot 3
+Abundance[54, "Sample_Number"] <- 10
+Abundance[55, "Sample_Number"] <- 11
+#2021 LG, plot 8
+Abundance[944, "Sample_Number"] <- 2
+Abundance[945, "Sample_Number"] <- 3
+
+Abundance_Wide_Count<-Abundance_Family_Avg %>%
+  group_by(Collection_Method,Year,Block,Grazing_Treatment,Paddock,Feeding.Guild) %>% 
+  mutate(Guild_Abundance=sum(Avg_Abundance)) %>% 
+  select(-c(Correct_Order,Correct_Family,Avg_Abundance)) %>% 
+  unique() %>%
+  filter(Feeding.Guild!="") %>% 
+  spread(key=Feeding.Guild,value=Guild_Abundance, fill=0) 
+
+Abundance_Wide_Count$Year=as.character(Abundance_Wide_Count$Year)
+
+#dvac
+BC_Data_Count <- metaMDS(Abundance_Wide_Count[,6:14])
+#look at species signiciance driving NMDS 
+intrinsics <- envfit(BC_Data_Count, Abundance_Wide_Count, permutations = 999)
+head(intrinsics)
+#Make a data frame called sites with 1 column and same number of rows that is in Wide Order Count
+sites <- 1:nrow(Abundance_Wide_Count)
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-3
+BC_Meta_Data_Count <- Abundance_Wide_Count[,1:5] 
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_Count$points,col=as.factor(BC_Meta_Data_Count$Year))
+
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_Count,groups = as.factor(BC_Meta_Data_Count$Year),kind = "sd",display = "sites", label = T)
+
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_Count = data.frame(MDS1 = BC_Data_Count$points[,1], MDS2 = BC_Data_Count$points[,2],group=BC_Meta_Data_Count$Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_Count <- cbind(BC_Meta_Data_Count,BC_NMDS_Count)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_Count<-ordiellipse(BC_Data_Count, BC_Meta_Data_Count$Year, display = "sites",
+                                   kind = "sd", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_Count <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_Count$group)){
+  BC_Ellipses_Count <- rbind(BC_Ellipses_Count, cbind(as.data.frame(with(BC_NMDS_Count[BC_NMDS_Count$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_Count[[g]]$cov,BC_Ord_Ellipses_Count[[g]]$center,BC_Ord_Ellipses_Count[[g]]$scale)))
+                                                      ,group=g))
+}
+
+#### NMDS Figures: By Order: Count ####
+
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = BC_NMDS_Graph_Count, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = BC_Ellipses_Count, aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  scale_color_manual(values=c("skyblue3","springgreen3","brown"),labels = c("2020","2021", "2022"),name="")+
+  scale_linetype_manual(values=c(1,2,3),labels = c("2020","2021", "2022"),name="")+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"))+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.position="none")+
+  annotate(geom="text", x=-2, y=0.8, label="Count",size=20)
+#export at 2000 x 1800
+
+
+####NMDS: Count: 2021 by Feeding Guild ####
+
+BC_Meta_Data_Count_Grazing <- Abundance_Wide_Count[,1:5] %>% 
+  mutate(Trt_Year=paste(Grazing_Treatment,Year,sep="."))
+#make a plot using the dataframe BC_Data and the column "points".  Make Grazing Treatment a factor - make the different grazing treatments different colors
+plot(BC_Data_Count$points,col=as.factor(BC_Meta_Data_Count_Grazing$Trt_Year))
+
+#make elipses using the BC_Data.  Group by grazing treatment and use standard deviation to draw eclipses
+ordiellipse(BC_Data_Count,groups = as.factor(BC_Meta_Data_Count_Grazing$Trt_Year),kind = "sd",display = "sites", label = T)
+
+#Make a data frame called BC_NMDS and at a column using the first set of "points" in BC_Data and a column using the second set of points.  Group them by watershed
+BC_NMDS_Count_Grazing = data.frame(MDS1 = BC_Data_Count$points[,1], MDS2 = BC_Data_Count$points[,2],group=BC_Meta_Data_Count_Grazing$Trt_Year)
+#Make data table called BC_NMDS_Graph and bind the BC_Meta_Data, and BC_NMDS data together
+BC_NMDS_Graph_Count_Grazing <- cbind(BC_Meta_Data_Count_Grazing,BC_NMDS_Count_Grazing)
+#Make a data table called BC_Ord_Ellipses using data from BC_Data and watershed information from BC_Meta_Data.  Display sites and find the standard error at a confidence iinterval of 0.95.  Place lables on the graph
+BC_Ord_Ellipses_Count_Grazing<-ordiellipse(BC_Data_Count, BC_Meta_Data_Count_Grazing$Trt_Year, display = "sites",
+                                           kind = "sd", conf = 0.95, label = T)
+#Make a new empty data frame called BC_Ellipses                
+BC_Ellipses_Count_Grazing <- data.frame()
+#Generate ellipses points - switched levels for unique - not sure if it's stil correct but it looks right
+for(g in unique(BC_NMDS_Count_Grazing$group)){
+  BC_Ellipses_Count_Grazing <- rbind(BC_Ellipses_Count_Grazing, cbind(as.data.frame(with(BC_NMDS_Count_Grazing[BC_NMDS_Count_Grazing$group==g,],                                                  veganCovEllipse(BC_Ord_Ellipses_Count_Grazing[[g]]$cov,BC_Ord_Ellipses_Count_Grazing[[g]]$center,BC_Ord_Ellipses_Count_Grazing[[g]]$scale)))
+                                                                      ,group=g))
+}
+
+#### NMDS Figures: By Order: Count ####
+
+#2021
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = subset(BC_NMDS_Graph_Count_Grazing,group==c("HG.2021","LG.2021","NG.2021")), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = subset(BC_Ellipses_Count_Grazing,group==c("HG.2021","LG.2021","NG.2021")), aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  scale_color_manual(values=c("thistle2","thistle3","thistle4"), labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("NG.2021","LG.2021","HG.2021"))+
+  scale_shape_manual(values=c(15,16,17), labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("NG.2021","LG.2021","HG.2021"))+
+  scale_linetype_manual(values=c(1,2,3),labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("NG.2021","LG.2021","HG.2021"))+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"))+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.position="none")+
+  annotate(geom="text", x=-2, y=0.8, label="2021 Count",size=20)
+#export at 2000 x 1800
+
+#2022
+#Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
+ggplot(data = subset(BC_NMDS_Graph_Count_Grazing,group==c("HG.2022","LG.2022","NG.2022")), aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+  #make a point graph where the points are size 5.  Color them based on exlosure
+  geom_point(size=8, stroke = 2) +
+  #Use the data from BC_Ellipses to make ellipses that are size 1 with a solid line
+  geom_path(data = subset(BC_Ellipses_Count_Grazing,group==c("HG.2022","LG.2022","NG.2022")), aes(x=NMDS1, y=NMDS2), size=4)+
+  #make shape, color, and linetype in one combined legend instead of three legends
+  labs(color  = "", linetype = "", shape = "")+
+  scale_color_manual(values=c("thistle2","thistle3","thistle4"), labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("HG.2022","LG.2022","NG.2022"))+
+  scale_shape_manual(values=c(15,16,17), labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("HG.2022","LG.2022","NG.2022"))+
+  scale_linetype_manual(values=c(1,2,3),labels=c("Cattle Removal","Destock","High Impact Grazing"), breaks=c("HG.2022","LG.2022","NG.2022"))+
+  # make legend 2 columns
+  guides(shape=guide_legend(ncol=2),colour=guide_legend(ncol=2),linetype=guide_legend(ncol=2))+
+  #make the text size of the legend titles 28
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"))+
+  #Label the x-axis "NMDS1" and the y-axis "NMDS2"
+  xlab("NMDS1")+
+  ylab("NMDS2")+
+  theme(text = element_text(size = 55),legend.text=element_text(size=40),legend.position="none")+
+  annotate(geom="text", x=-1, y=0.8, label="2022 Count",size=20)
+#export at 2000 x 1800
+
+
+#### PERMANOVA: By Order: Count ####
+
+##PerMANOVA
+
+#Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
+Species_Matrix_Count <- Abundance_Wide_Count[,6:ncol(Abundance_Wide_Count)]
+#Make a new dataframe with data from Wide_Relative_Cover columns 1-3
+Environment_Matrix_Count <- Abundance_Wide_Count[,1:5] %>% 
+  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
+
+Environment_Matrix_Count$Grazing_Treatment_Fact=as.factor(Environment_Matrix_Count$Grazing_Treatment)
+Environment_Matrix_Count$Block_Fact=as.numeric(Environment_Matrix_Count$Block)
+Environment_Matrix_Count$Year_Fact=as.factor(Environment_Matrix_Count$Year)
+
+#run a perMANOVA comparing across watershed and exclosure, how does the species composition differ.  Permutation = 999 - run this 999 times and tell us what the preportion of times it was dissimilar
+#Adding in the 'strata' function does not affect results - i can't figure out if I am doing in incorrectly or if they do not affect the results (seems unlikely though becuase everything is exactly the same)
+PerMANOVA2_Count <- adonis2(formula = Species_Matrix_Count~Grazing_Treatment_Fact*Year_Fact + (1 | Block_Fact) , data=Environment_Matrix_Count,permutations = 999, method = "bray")
+#give a print out of the PermMANOVA
+print(PerMANOVA2_Count)  #Grazing (0.01), Year (0.001), GxYear (0.003)
+#pairwise test
+Posthoc_Count_Year<-pairwise.adonis(Species_Matrix_Count,factors=Environment_Matrix_Count$Year, p.adjust.m = "BH")
+Posthoc_Count_Year   #2020-2021 (0.001), 2021-2022 (0.001), 2020-2022 (0.001)
+#pairwise test
+Posthoc_Count_Grazing<-pairwise.adonis(Species_Matrix_Count,factors=Environment_Matrix_Count$Grazing_Treatment, p.adjust.m = "BH")
+Posthoc_Count_Grazing  #ns
+
+Posthoc_Count_Grazing_Year<-pairwise.adonis(Species_Matrix_Count,factors=Environment_Matrix_Count$Gr_Yr, p.adjust.m = "BH")
+Posthoc_Count_Grazing_Year #Significant: HG-NG (2021)
+
+
+#### PERMDISP: By Order ####
+Abundance_Wide_Count_dispr<-Abundance_Wide_Count %>% 
+  mutate(Gr_Yr=paste(Grazing_Treatment,Year,sep="."))
+
+#Dvac
+#Make a new dataframe and calculate the dissimilarity of the Species_Matrix dataframe
+BC_Distance_Matrix_Count <- vegdist(Species_Matrix_Count)
+#Run a dissimilarity matrix (PermDisp) comparing grazing treatment
+Dispersion_Results_Grazing_Count <- betadisper(BC_Distance_Matrix_Count,Abundance_Wide_Count_dispr$Gr_Yr)
+permutest(Dispersion_Results_Grazing_Count,pairwise = T, permutations = 999) 
+
+
 
 
