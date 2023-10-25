@@ -2139,7 +2139,6 @@ anova(OrderShannon_2022_Glmm_Weight_Avg) #not significant
 
 
 #### NMDS: By Order ####
-
 #### Bray Curtis: By Order ####
 #Create wide relative cover dataframe
 Abundance_Wide_Weight_Avg<-Weight_Data_Summed_Avg %>%
@@ -2274,6 +2273,8 @@ NMDS_Year+
 #### PERMANOVA: By Order: Weight ####
 
 ##PerMANOVA
+Abundance_Wide_Weight_Avg<-Abundance_Wide_Weight_Avg %>% 
+  filter(Block!="NA")
 
 #Make a new dataframe with the data from Wide_Relative_Cover all columns after 5
 Species_Matrix_Weight_Avg <- Abundance_Wide_Weight_Avg[,6:ncol(Abundance_Wide_Weight_Avg)]
@@ -2648,6 +2649,9 @@ ols_test_normality(Normality_RelCov_Family_2022_Avg) #normal
 #### Feeding Guild Stats ####
 RelCov_Family_2020_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
 anova(RelCov_Family_2020_Avg, type = 3) #feeding guild (<2e-16)
+RelCov_Family_2020_Trtm_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), sqrt(RelativeCount)  ~ Trtm + (1|Block))
+anova(RelCov_Family_2020_Trtm_Avg, type = 3)
+summary(glht(RelCov_Family_2020_Trtm_Avg, linfct = mcp(Trtm = "Tukey")), test = adjusted(type = "BH"))
 
 RelCov_Family_2021_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild + (1|Block))
 anova(RelCov_Family_2021_Avg, type = 3) #grazing (0.05), feeding guild (2e-16), grazing:feeding guild (0.01619)
