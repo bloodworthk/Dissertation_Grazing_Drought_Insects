@@ -2528,7 +2528,7 @@ anova(OrderEvar_2021_Glmm_Weight_Avg) #not significant
 #### Feeding Guild Graph ####
 
 Relative_Count_Family_Plot_Avg<-Abundance_Family_Guild %>% 
-  mutate(Feeding_Guild_Graph=ifelse(Feeding.Guild=="Insectivores","Predators",ifelse(Feeding.Guild=="","Other",ifelse(Feeding.Guild=="Multi","Other",ifelse(Feeding.Guild=="necrophagous","Scavenger",ifelse(Feeding.Guild=="parasitoids","Parasitoids",ifelse(Feeding.Guild=="phytophagous","Herbivores",Feeding.Guild))))))) %>% 
+  mutate(Feeding_Guild_Graph=ifelse(Feeding.Guild=="Insectivores","Predators",ifelse(Feeding.Guild=="","Other",ifelse(Feeding.Guild=="Multi","Other",ifelse(Feeding.Guild=="necrophagous","Scavenger",ifelse(Feeding.Guild=="parasitoids","Parasitoids",ifelse(Feeding.Guild=="phytophagous","Herbivores",ifelse(Correct_Order=="Orthoptera","Herbivores", Feeding.Guild)))))))) %>% 
   filter(Block!="NA" & Correct_Family!="NA") %>% 
   filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
   select(Year,Block,Plot,Grazing_Treatment,Feeding_Guild_Graph,Abundance) %>% 
@@ -2569,6 +2569,7 @@ Relative_Count_Family_Avg<-Relative_Count_Family_Plot_Avg %>%
 
 ##reorder bar graphs##
 Relative_Count_Family_Avg$Grazing_Treatment <- factor(Relative_Count_Family_Avg$Grazing_Treatment, levels = c("Cattle Removal", "Destock Grazing", "High Impact Grazing"))
+Relative_Count_Family_Avg$Feeding_Guild_Graph <- factor(Relative_Count_Family_Avg$Feeding_Guild_Graph, levels=c("Other","Fungivores","Omnivores","Parasitoids","Predators","Scavenger","Herbivores"))
 
 Feeding_Guild_2020_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Feeding_Guild_Graph, position = "stack"))+
   geom_bar(stat="identity")+
@@ -2661,7 +2662,12 @@ anova(RelCov_Family_2021_Avg, type = 3)
 
 #2022
 RelCov_Family_2022_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph + (1|Block))
-anova(RelCov_Family_2022_Avg, type = 3) 
+anova(RelCov_Family_2022_Avg, type = 3)
+
+RelCov_Family_2022_Avg_Trt<-lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Trtm + (1|Block))
+anova(RelCov_Family_2022_Avg_Trt, type = 3)
+###post hoc test for lmer test ##
+summary(glht(RelCov_Family_2022_Avg_Trt, linfct = mcp(Trtm = "Tukey")), test = adjusted(type = "BH"))
 
 #### NMDS using Count x Feeding Guild ####
 
