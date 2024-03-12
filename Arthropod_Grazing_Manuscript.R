@@ -19,9 +19,11 @@ library(devtools)
 library(pairwiseAdonis)
 library(ggpattern)
 
+#set working directory - UMD mac
+setwd("/Users/kathryn/Library/CloudStorage/Box-Box/Projects/Dissertation/Data/Insect_Data")
 
 # Set Working Directory - Mac
-setwd("~/Library/CloudStorage/Box-Box/Projects/Dissertation/Data/Insect_Data")
+setwd("~/Box-Box/Projects/Dissertation/Data/Insect_Data")
 
 # Set Working Directory - PC
 setwd("C:/Users/kjbloodw/Box/Projects/Dissertation/Data/Insect_Data")
@@ -421,7 +423,7 @@ Relative_Count<-Abundance %>%
 
 
 
-#### Figure 1: (A,B): Average Plot Weight, (C,D): Order Proportion by Weight, (E,F): Order Proportion by Cover ####
+#### Figure 2: (A,B): Average Plot Weight, (C,D): Order Proportion by Weight, (E,F): Order Proportion by Cover ####
 
 ##reorder bar graphs##
 Weight_by_Grazing_dvac$Grazing_Treatment <- factor(Weight_by_Grazing_dvac$Grazing_Treatment, levels = c("NG", "LG", "HG"))
@@ -591,7 +593,7 @@ Order_Count_2022<-ggplot(subset(Relative_Count,Year==2022),aes(x=Grazing_Treatme
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=1.8, y=1.2, label="I.Abundance by Count",size=20)
 
-#### Create Figure 1 ####
+#### Create Figure 2 ####
 Dvac_2020_Plot+
   Dvac_2021_Plot+
   Dvac_2022_Plot+
@@ -686,7 +688,7 @@ CommunityMetrics_Weight_Avg<-CommunityMetrics_Weight  %>%
   ungroup %>% 
   mutate(Grazing_Treatment_Fig=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
 
-#### Figure 2: Diversity based on Arthropod Order Weight ####
+#### Figure 1: Diversity based on Arthropod Order Weight ####
 ##reorder bar graphs##
 CommunityMetrics_Weight_Avg$Grazing_Treatment <- factor(CommunityMetrics_Weight_Avg$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 
@@ -755,7 +757,7 @@ Shannon_2022_Weight<-ggplot(subset(CommunityMetrics_Weight_Avg,Year==2022),aes(x
   theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
   geom_text(x=0.85, y=1, label="C. 2022",size=20)
 
-#### Create Figure 2####
+#### Create Figure 1 ####
 Shannon_2020_Weight+  
   Shannon_2021_Weight+
   Shannon_2022_Weight+
@@ -1753,7 +1755,7 @@ Relative_Count_Avg<-Abundance_Avg %>%
 
 
 
-#### Figure 1: (A,B): Average Plot Weight, (C,D): Order Proportion by Weight, (E,F): Order Proportion by Cover ####
+#### Figure 2: (A,B): Average Plot Weight, (C,D): Order Proportion by Weight, (E,F): Order Proportion by Cover ####
 
 ##reorder bar graphs##
 Weight_by_Grazing_dvac_Avg$Grazing_Treatment <- factor(Weight_by_Grazing_dvac_Avg$Grazing_Treatment, levels = c("NG", "LG", "HG"))
@@ -1919,7 +1921,7 @@ Order_Count_2022_Avg<-ggplot(subset(Relative_Count,Year==2022),aes(x=Grazing_Tre
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=1, y=1.2, label="(i)",size=20)
 
-#### Create Figure 1 ####
+#### Create Figure 2 ####
 Dvac_2020_Plot_Avg+
   Dvac_2021_Plot_Avg+
   Dvac_2022_Plot_Avg+
@@ -2027,7 +2029,7 @@ CommunityMetrics_Weight_Avg_Summary<-CommunityMetrics_Weight_Avg  %>%
   ungroup %>% 
   mutate(Grazing_Treatment_Fig=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
 
-#### Figure 2: Diversity based on Arthropod Order Weight ####
+#### Figure 1: Diversity based on Arthropod Order Weight ####
 ##reorder bar graphs##
 CommunityMetrics_Weight_Avg_Summary$Grazing_Treatment <- factor(CommunityMetrics_Weight_Avg_Summary$Grazing_Treatment, levels = c("NG", "LG", "HG"))
 
@@ -2096,7 +2098,7 @@ Shannon_2022_Weight_Avg<-ggplot(subset(CommunityMetrics_Weight_Avg_Summary,Year=
   theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
   geom_text(x=0.85, y=1, label="C. 2022",size=20)
 
-#### Create Figure 2####
+#### Create Figure 1####
 Shannon_2020_Weight_Avg+  
   Shannon_2021_Weight_Avg+
   Shannon_2022_Weight_Avg+
@@ -3153,3 +3155,130 @@ leveneTest(data = RelCov_FunctionalGroups_Avg ,log(Avg_Relative_Cover)  ~ grazin
 RelCov_GLMM <- lmerTest::lmer(data = RelCov_FunctionalGroups_Avg , log(Avg_Relative_Cover) ~ grazing_treatment + (1|block))
 anova(RelCov_GLMM, type = 3) #NS
 
+
+
+
+#### CCA by Year: pseudo rep ####
+
+CCA_Data <- Abundance_Wide_Weight[,6:15]
+
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-15
+CCA_Meta_Data <- Abundance_Wide_Weight[,1:5]
+
+#run the CCA
+CCA_Year <- cca(CCA_Data ~ Year, data=CCA_Meta_Data)
+CCA_Year
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Year, c(1:9), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Year$CCA$eig/sum(CCA_Year$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Year)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Year, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(CCA_Year, by = "axis")  
+
+plot(CCA_Year)
+
+#### CCA by Grazing Treatment: pseudo rep ####
+
+#run the CCA
+CCA_Grazing <- cca(CCA_Data ~ Grazing_Treatment, data=CCA_Meta_Data)
+CCA_Grazing
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Grazing, c(1:9), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Grazing$CCA$eig/sum(CCA_Grazing$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Grazing)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Grazing, by = "terms")  
+
+plot(CCA_Grazing)
+
+
+#### CCA by Year*Grazing Treatment: pseudo rep ####
+
+#run the CCA
+CCA_Year_Grazing <- cca(CCA_Data ~ Year*Grazing_Treatment, data=CCA_Meta_Data)
+summary(CCA_Year_Grazing)
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Year_Grazing, c(1:9), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Year_Grazing$CCA$eig/sum(CCA_Year_Grazing$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Year_Grazing)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Year_Grazing, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(CCA_Year_Grazing, by = "axis")  
+
+plot(CCA_Year_Grazing)
+
+#### RDA Year ####
+
+RDA_Year<- rda(CCA_Data ~ Year, data=CCA_Meta_Data)
+
+summary(RDA_Year)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Year, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Year)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Year, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(RDA_Year, by = "axis")  
+
+plot(RDA_Year)
+
+#### RDA Grazing ####
+
+RDA_Grazing <- rda(CCA_Data ~ Grazing_Treatment, data=CCA_Meta_Data)
+
+summary(RDA_Grazing)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Grazing, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Grazing)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Grazing, by = "terms")  
+
+plot(RDA_Grazing)
+
+### RDA Year and Grazing
+
+RDA_Year_Grazing <- rda(CCA_Data ~ Year*Grazing_Treatment, data=CCA_Meta_Data)
+
+summary(RDA_Year_Grazing)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Year_Grazing, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Year_Grazing)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Year_Grazing, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(RDA_Year_Grazing, by = "axis")  
+
+plot(RDA_Year_Grazing)
