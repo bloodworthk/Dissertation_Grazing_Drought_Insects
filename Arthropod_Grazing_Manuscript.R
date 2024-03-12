@@ -3228,7 +3228,7 @@ anova(CCA_Year_Grazing, by = "axis")
 
 plot(CCA_Year_Grazing)
 
-#### RDA Year ####
+#### RDA Year: pseudo rep ####
 
 RDA_Year<- rda(CCA_Data ~ Year, data=CCA_Meta_Data)
 
@@ -3247,7 +3247,7 @@ anova(RDA_Year, by = "axis")
 
 plot(RDA_Year)
 
-#### RDA Grazing ####
+#### RDA Grazing: pseudo rep  ####
 
 RDA_Grazing <- rda(CCA_Data ~ Grazing_Treatment, data=CCA_Meta_Data)
 
@@ -3264,7 +3264,7 @@ anova(RDA_Grazing, by = "terms")
 
 plot(RDA_Grazing)
 
-### RDA Year and Grazing
+#### RDA Year and Grazing: pseudo rep ####
 
 RDA_Year_Grazing <- rda(CCA_Data ~ Year*Grazing_Treatment, data=CCA_Meta_Data)
 
@@ -3282,3 +3282,129 @@ anova(RDA_Year_Grazing, by = "terms")
 anova(RDA_Year_Grazing, by = "axis")  
 
 plot(RDA_Year_Grazing)
+
+
+#### CCA by Year: n=3 ####
+
+CCA_Data_Avg <- Abundance_Wide_Weight_Avg[,6:15]
+
+#Make a new data table called BC_Meta_Data and use data from Wide_Relative_Cover columns 1-15
+CCA_Meta_Data_Avg <- Abundance_Wide_Weight_Avg[,1:5]
+
+#run the CCA
+CCA_Year_Avg <- cca(CCA_Data_Avg ~ Year, data=CCA_Meta_Data_Avg)
+CCA_Year_Avg
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Year_Avg, c(1:8), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Year_Avg$CCA$eig/sum(CCA_Year_Avg$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Year_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Year_Avg, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(CCA_Year_Avg, by = "axis")  
+
+plot(CCA_Year_Avg)
+
+#### CCA by Grazing Treatment:  n=3  ####
+
+#run the CCA
+CCA_Grazing_Avg <- cca(CCA_Data_Avg ~ Grazing_Treatment, data=CCA_Meta_Data_Avg)
+CCA_Grazing_Avg
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Grazing_Avg, c(1:8), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Grazing_Avg$CCA$eig/sum(CCA_Grazing_Avg$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Grazing_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Grazing_Avg, by = "terms")  
+
+plot(CCA_Grazing_Avg)
+
+
+#### CCA by Year*Grazing Treatment:  n=3  ####
+
+#run the CCA
+CCA_Year_Grazing_Avg <- cca(CCA_Data_Avg ~ Year*Grazing_Treatment, data=CCA_Meta_Data_Avg)
+summary(CCA_Year_Grazing_Avg)
+
+#pull scores to use for subsequent univariate analyses
+scores(CCA_Year_Grazing_Avg, c(1:7), scaling=3)
+
+#find out what percentage of the variation is explained by each axis
+CCA_Year_Grazing_Avg$CCA$eig/sum(CCA_Year_Grazing_Avg$CCA$eig)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(CCA_Year_Grazing_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(CCA_Year_Grazing_Avg, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(CCA_Year_Grazing_Avg, by = "axis")  
+
+plot(CCA_Year_Grazing_Avg)
+
+#### RDA Year n=3  ####
+
+RDA_Year_Avg<- rda(CCA_Data_Avg ~ Year, data=CCA_Meta_Data_Avg)
+
+summary(RDA_Year_Avg)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Year_Avg, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Year_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Year_Avg, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(RDA_Year_Avg, by = "axis")  
+
+plot(RDA_Year_Avg)
+
+#### RDA Grazing  n=3 ####
+
+RDA_Grazing_Avg <- rda(CCA_Data_Avg ~ Grazing_Treatment, data=CCA_Meta_Data_Avg)
+
+summary(RDA_Grazing_Avg)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Grazing_Avg, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Grazing_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Grazing_Avg, by = "terms")  
+
+plot(RDA_Grazing_Avg)
+
+#### RDA Year and Grazing  n=3 ####
+
+RDA_Year_Grazing_Avg <- rda(CCA_Data_Avg ~ Year*Grazing_Treatment, data=CCA_Meta_Data_Avg)
+
+summary(RDA_Year_Grazing_Avg)
+
+#pull scores to use for subsequent univariate analyses
+scores(RDA_Year_Grazing_Avg, c(1:4), scaling=3)
+
+#do some stats
+#overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
+anova(RDA_Year_Grazing_Avg)    #ns
+#test significance by terms (= PerMANOVA)
+anova(RDA_Year_Grazing_Avg, by = "terms")  
+#justifies subsequent univariate tests for axes that are significant
+anova(RDA_Year_Grazing_Avg, by = "axis")  
+
+plot(RDA_Year_Grazing_Avg)
