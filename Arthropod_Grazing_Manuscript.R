@@ -3408,3 +3408,362 @@ anova(RDA_Year_Grazing_Avg, by = "terms")
 anova(RDA_Year_Grazing_Avg, by = "axis")  
 
 plot(RDA_Year_Grazing_Avg)
+
+
+
+#### Grasshopper Weights: Not averaged ####
+Grasshopper_Weight<-Weight_Data_Official %>% 
+  filter(Correct_Order=="Orthoptera") %>% 
+  separate(Coll_Year_Bl_Trt,c("CollectionMethod","Year","Block","Grazing_Treatment"),sep="_") %>% 
+  filter(Grazing_Treatment!="NA") %>% 
+  mutate(Dry_Weight_g=ifelse(Dry_Weight_g==0.00000,0.0001,Dry_Weight_g)) %>% 
+  mutate(Dry_Weight_mg=Dry_Weight_g*1000)
+
+Grasshopper_Weight_Plot<-Grasshopper_Weight %>% 
+  group_by(Year,Grazing_Treatment) %>%
+  summarize(Weight_Std=sd(Dry_Weight_mg),Weight_Mean=mean(Dry_Weight_mg),Weight_n=length(Dry_Weight_mg))%>%
+  mutate(Weight_St_Error=Weight_Std/sqrt(Weight_n)) %>% 
+  ungroup() %>% 
+  mutate(Grazing_Treatment_Fig=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
+
+##reorder bar graphs##
+Grasshopper_Weight$Grazing_Treatment <- factor(Grasshopper_Weight$Grazing_Treatment, levels = c("NG", "LG", "HG"))
+
+
+# 2020 
+Grasshopper_2020_Weight<-ggplot(subset(Grasshopper_Weight_Plot,Year==2020),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  #scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=40, label="A. 2020",size=20)
+
+
+# 2021
+Grasshopper_2021_Weight<-ggplot(subset(Grasshopper_Weight_Plot,Year==2021),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="B. 2021",size=20)
+
+# 2022
+Grasshopper_2022_Weight<-ggplot(subset(Grasshopper_Weight_Plot,Year==2022),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+ 
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="C. 2022",size=20)
+
+
+#### Create Grasshoper Figure: Not Averaged ####
+Grasshopper_2020_Weight+  
+  Grasshopper_2021_Weight+
+  Grasshopper_2022_Weight+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4000x2000
+
+####Individual Grasshopper Weight Normality: Not Averaged####
+
+# Weight 2020
+Grasshopper_Weight_2020 <- lm(data = subset(Grasshopper_Weight, Year == 2020),log(Dry_Weight_mg)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2020) 
+ols_test_normality(Grasshopper_Weight_2020) #normalish
+
+# Weight 2021
+Grasshopper_Weight_2021 <- lm(data = subset(Grasshopper_Weight, Year == 2021),log(Dry_Weight_mg)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2021) 
+ols_test_normality(Grasshopper_Weight_2021) #normalish
+
+# Weight 2020
+Grasshopper_Weight_2022 <- lm(data = subset(Grasshopper_Weight, Year == 2022),log(Dry_Weight_mg)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2022) 
+ols_test_normality(Grasshopper_Weight_2022) #normalish
+
+#### Stats: Individual Grasshopper: Weight: Not Averaged ####
+
+# 2020 Weight
+Grasshopper_2020_Glmm_Weight <- lmer(log(Dry_Weight_mg) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight,Year==2020))
+anova(Grasshopper_2020_Glmm_Weight) #not significant
+
+# 2021 Weight
+Grasshopper_2021_Glmm_Weight <- lmer(log(Dry_Weight_mg) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight,Year==2021))
+anova(Grasshopper_2021_Glmm_Weight) #Grazing (0.01323)
+### post hoc test for lmer test ##
+summary(glht(Grasshopper_2021_Glmm_Weight, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.30), #LG-HG (0.009), NG-HG (0.0391)
+
+# 2022 Weight
+Grasshopper_2022_Glmm_Weight <- lmer(log(Dry_Weight_mg) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight,Year==2022))
+anova(Grasshopper_2022_Glmm_Weight) #not signfiicant
+
+
+#### Grasshopper Weights: averaged by plot####
+Grasshopper_Weight_PlotAvg<-Grasshopper_Weight %>% 
+  group_by(Year,Block,Grazing_Treatment,Plot) %>% 
+  summarise(Avg_Plot_Weight=mean(Dry_Weight_mg))
+
+Grasshopper_Weight_PlotAvg_Graph<-Grasshopper_Weight_PlotAvg %>% 
+  group_by(Year,Grazing_Treatment) %>%
+  summarize(Weight_Std=sd(Avg_Plot_Weight),Weight_Mean=mean(Avg_Plot_Weight),Weight_n=length(Avg_Plot_Weight))%>%
+  mutate(Weight_St_Error=Weight_Std/sqrt(Weight_n)) %>% 
+  ungroup() %>% 
+  mutate(Grazing_Treatment_Fig=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
+
+##reorder bar graphs##
+Grasshopper_Weight_PlotAvg_Graph$Grazing_Treatment <- factor(Grasshopper_Weight_PlotAvg_Graph$Grazing_Treatment, levels = c("NG", "LG", "HG"))
+
+
+# 2020 
+Grasshopper_2020_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2020),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  #scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=40, label="A. 2020",size=20)
+
+
+# 2021
+Grasshopper_2021_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2021),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="B. 2021",size=20)
+
+# 2022
+Grasshopper_2022_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2022),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+ 
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="C. 2022",size=20)
+
+
+#### Create Grasshoper Figure: Averaged by plot ####
+Grasshopper_2020_Weight_Plot+  
+  Grasshopper_2021_Weight_Plot+
+  Grasshopper_2022_Weight_Plot+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4000x2000
+
+
+####Individual Grasshopper Weight Normality: Averaged by Plot ####
+  
+# Weight 2020
+Grasshopper_Weight_2020_Plot <- lm(data = subset(Grasshopper_Weight_PlotAvg, Year == 2020),log(Avg_Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2020_Plot) 
+ols_test_normality(Grasshopper_Weight_2020_Plot) #normal
+
+# Weight 2021
+Grasshopper_Weight_2021_Plot <- lm(data = subset(Grasshopper_Weight_PlotAvg, Year == 2021),log(Avg_Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2021_Plot) 
+ols_test_normality(Grasshopper_Weight_2021_Plot) #normal
+
+# Weight 2020
+Grasshopper_Weight_2022_Plot <- lm(data = subset(Grasshopper_Weight_PlotAvg, Year == 2022),log(Avg_Plot_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2022_Plot) 
+ols_test_normality(Grasshopper_Weight_2022_Plot) #normal
+
+#### Stats: Individual Grasshopper: Weight: : Averaged by Plot####
+
+# 2020 Weight
+Grasshopper_2020_Glmm_Weight_Plot <- lmer(log(Avg_Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PlotAvg,Year==2020))
+anova(Grasshopper_2020_Glmm_Weight_Plot) #not significant
+
+# 2021 Weight
+Grasshopper_2021_Glmm_Weight_Plot <- lmer(log(Avg_Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PlotAvg,Year==2021))
+anova(Grasshopper_2021_Glmm_Weight_Plot) #Grazing (0.01323)
+### post hoc test for lmer test ##
+summary(glht(Grasshopper_2021_Glmm_Weight_Plot, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.30), #LG-HG (0.009), NG-HG (0.0391)
+
+# 2022 Weight
+Grasshopper_2022_Glmm_Weight_Plot <- lmer(log(Avg_Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PlotAvg,Year==2022))
+anova(Grasshopper_2022_Glmm_Weight_Plot) #not significant
+
+#### Grasshopper Weights: averaged by Paddock####
+Grasshopper_Weight_PaddockAvg<-Grasshopper_Weight %>%
+  mutate(Paddock=paste(Block,Grazing_Treatment,sep="-")) %>% 
+  group_by(Year,Paddock,Grazing_Treatment,Block) %>% 
+  summarise(Avg_Paddock_Weight=mean(Dry_Weight_mg)) %>% 
+  ungroup()
+
+Grasshopper_Weight_PaddockAvg_Graph<-Grasshopper_Weight_PaddockAvg %>% 
+  group_by(Year,Grazing_Treatment) %>%
+  summarize(Weight_Std=sd(Avg_Paddock_Weight),Weight_Mean=mean(Avg_Paddock_Weight),Weight_n=length(Avg_Paddock_Weight))%>%
+  mutate(Weight_St_Error=Weight_Std/sqrt(Weight_n)) %>% 
+  ungroup() %>% 
+  mutate(Grazing_Treatment_Fig=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
+
+##reorder bar graphs##
+Grasshopper_Weight_PaddockAvg_Graph$Grazing_Treatment <- factor(Grasshopper_Weight_PaddockAvg_Graph$Grazing_Treatment, levels = c("NG", "LG", "HG"))
+
+# 2020 
+Grasshopper_2020_Weight_Paddock<-ggplot(subset(Grasshopper_Weight_PaddockAvg_Graph,Year==2020),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  #scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 55),legend.text=element_text(size=45))+
+  geom_text(x=0.85, y=40, label="A. 2020",size=20)
+
+
+# 2021
+Grasshopper_2021_Weight_Paddock<-ggplot(subset(Grasshopper_Weight_PaddockAvg_Graph,Year==2021),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="B. 2021",size=20)
+
+# 2022
+Grasshopper_2022_Weight_Paddock<-ggplot(subset(Grasshopper_Weight_PaddockAvg_Graph,Year==2022),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+ 
+  theme(text = element_text(size = 55),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=0.85, y=40, label="C. 2022",size=20)
+
+
+#### Create Grasshoper Figure: Averaged by Paddock ####
+Grasshopper_2020_Weight_Paddock+  
+  Grasshopper_2021_Weight_Paddock+
+  Grasshopper_2022_Weight_Paddock+
+  plot_layout(ncol = 3,nrow = 1)
+#Save at 4000x2000
+
+
+####Individual Grasshopper Weight Normality: Averaged by Paddock ####
+
+# Weight 2020
+Grasshopper_Weight_2020_Paddock <- lm(data = subset(Grasshopper_Weight_PaddockAvg, Year == 2020),log(Avg_Paddock_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2020_Paddock) 
+ols_test_normality(Grasshopper_Weight_2020_Paddock) #normal
+
+# Weight 2021
+Grasshopper_Weight_2021_Paddock <- lm(data = subset(Grasshopper_Weight_PaddockAvg, Year == 2021),log(Avg_Paddock_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2021_Paddock) 
+ols_test_normality(Grasshopper_Weight_2021_Paddock) #normal
+
+# Weight 2020
+Grasshopper_Weight_2022_Paddock <- lm(data = subset(Grasshopper_Weight_PaddockAvg, Year == 2022),log(Avg_Paddock_Weight)  ~ Grazing_Treatment)
+ols_plot_resid_hist(Grasshopper_Weight_2022_Paddock) 
+ols_test_normality(Grasshopper_Weight_2022_Paddock) #normal
+
+#### Stats: Individual Grasshopper: Weight: : Averaged by Paddock####
+
+# 2020 Weight
+Grasshopper_2020_Glmm_Weight_Paddock <- lmer(log(Avg_Paddock_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PaddockAvg,Year==2020))
+anova(Grasshopper_2020_Glmm_Weight_Paddock) #not significant
+
+# 2021 Weight
+Grasshopper_2021_Glmm_Weight_Paddock <- lmer(log(Avg_Paddock_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PaddockAvg,Year==2021))
+anova(Grasshopper_2021_Glmm_Weight_Paddock) #Grazing (0.001)
+### post hoc test for lmer test ##
+summary(glht(Grasshopper_2021_Glmm_Weight_Paddock, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) 
+
+# 2022 Weight
+Grasshopper_2022_Glmm_Weight_Paddock <- lmer(log(Avg_Paddock_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Grasshopper_Weight_PaddockAvg,Year==2022))
+anova(Grasshopper_2022_Glmm_Weight_Paddock) #not significant
+### post hoc test for lmer test ##
+summary(glht(Grasshopper_2022_Glmm_Weight_Paddock, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) 
