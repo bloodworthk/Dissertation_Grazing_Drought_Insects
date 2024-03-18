@@ -876,7 +876,7 @@ for(g in unique(BC_NMDS_Weight_Grazing$group)){
 
 ##NMDS Figure: Year
 #Plot the data from BC_NMDS_Graph, where x=MDS1 and y=MDS2, make an ellipse based on "group"
-ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
+NMDS_Year<-ggplot(data = BC_NMDS_Graph_Weight, aes(MDS1,MDS2, shape = group,color=group,linetype=group))+
   geom_point(size=6, stroke = 2) +
   geom_path(data = BC_Ellipses_Weight, aes(x=NMDS1, y=NMDS2), size=4)+
   labs(color  = "", linetype = "", shape = "")+
@@ -1502,6 +1502,7 @@ Relative_Count_Family<-Abundance_Family_Guild %>%
 
 ##reorder bar graphs##
 Relative_Count_Family$Grazing_Treatment <- factor(Relative_Count_Family$Grazing_Treatment, levels = c("Cattle Removal", "Destock Grazing", "High Impact Grazing"))
+Relative_Count_Family$Guild <- factor(Relative_Count_Family$Guild, levels = c("Detritivore","Parasitoid","Predator","Leaf-Chewing Herbivore","Leaf-Mining Herbivore","Pollen/Nectar-Eating Herbivore","Sap-Sucking Herbivore","Wood-Eating Herbivore","Other Herbivore"))
 
 Feeding_Guild_2020<-ggplot(subset(Relative_Count_Family,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Guild, position = "stack"))+
   geom_bar(stat="identity")+
@@ -1511,7 +1512,7 @@ Feeding_Guild_2020<-ggplot(subset(Relative_Count_Family,Year==2020),aes(x=Grazin
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000"), name = "Feeding Guild")+
+  scale_fill_manual(values=c("#714c42","#a0897b", "#9CA497","#c9d0c5","#798671","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -1528,7 +1529,7 @@ Feeding_Guild_2021<-ggplot(subset(Relative_Count_Family,Year==2021),aes(x=Grazin
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000","Red"),name = "Feeding Guild")+
+  scale_fill_manual(values=c("#503930","#714c42","#a0897b", "#9CA497","#c9d0c5","#798671","#4e6b5d","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -1545,7 +1546,7 @@ Feeding_Guild_2022<-ggplot(subset(Relative_Count_Family,Year==2022),aes(x=Grazin
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000","red"), name = "Feeding Guild")+
+  scale_fill_manual(values=c("#503930","#714c42","#a0897b", "#9CA497","#c9d0c5","#9CA497","#798671","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -1581,17 +1582,15 @@ RelCov_Family_2020 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Y
 anova(RelCov_Family_2020, type = 3) #feeding guild (<2e-16)
 
 RelCov_Family_2021 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
-anova(RelCov_Family_2021, type = 3) #grazing (0.05), feeding guild (2e-16), grazing:feeding guild (0.01619)
+anova(RelCov_Family_2021, type = 3) #grazing (0.002), feeding guild (<2e-16), grazing:feeding guild (0.07)
+summary(glht(RelCov_Family_2021, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #ns
 
 RelCov_Family_2021_Trtm <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Trtm + (1|Block))
 anova(RelCov_Family_2021_Trtm, type = 3)
 summary(glht(RelCov_Family_2021_Trtm, linfct = mcp(Trtm = "Tukey")), test = adjusted(type = "BH"))
 
 RelCov_Family_2022 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2022"), sqrt(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
-anova(RelCov_Family_2022, type = 3) #grazing (0.02075), feeding guild (2e-16)
-
-
-
+anova(RelCov_Family_2022, type = 3) #feeding guild (2e-16)
 
 #### Averaging across paddocks before analyses ####
 #### New way of analyzing data - KR Suggestions ####
@@ -1619,11 +1618,24 @@ Abundance_Order_Avg<-Abundance_Order %>%
 ## Abundance by Family
 Abundance_Family_Avg<-Abundance_Family_Guild %>% 
   mutate(Paddock=paste(Block,Grazing_Treatment,sep="-")) %>% 
-  group_by(Collection_Method,Year,Paddock,Correct_Order,Correct_Family,Feeding.Guild) %>% 
+  group_by(Collection_Method,Year,Paddock,Correct_Order,Correct_Family,Guild) %>% 
   mutate(Avg_Abundance=mean(Abundance))%>% 
   ungroup() %>% 
-  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Paddock,Correct_Order,Correct_Family,Feeding.Guild,Avg_Abundance) %>% 
+  dplyr::select(Collection_Method,Year,Block,Grazing_Treatment,Paddock,Correct_Order,Correct_Family,Guild,Avg_Abundance) %>% 
   unique() 
+
+## Abundance by Feeding Guild
+Abundance_Family_Guild_Avg<-Abundance_Family_Guild %>% 
+  mutate(Paddock=paste(Block,Grazing_Treatment,sep="-")) %>% 
+  filter(Guild!="") %>% 
+  group_by(Year,Block,Grazing_Treatment,Paddock,Plot,Guild) %>% 
+  summarise(PlotAbundance=sum(Abundance)) %>% 
+  group_by(Year,Block,Grazing_Treatment,Paddock,Guild) %>% 
+  summarise(Avg_Abundance=mean(PlotAbundance))%>% 
+  ungroup() 
+
+
+
 
 ## Regular Abundance 
 Abundance_Avg<-Abundance %>% 
@@ -2265,7 +2277,7 @@ NMDS_2021<-ggplot(data = subset(BC_NMDS_Graph_Weight_Grazing_Avg,group==c("HG.20
 #annotate("text",x=0.8,y=-0.1,label="High",size=20) 
 
 #### Create Figure 3 ####
-NMDS_Year+
+NMDS_Year_Avg+
   NMDS_2021+
   plot_layout(ncol = 1,nrow = 2)
 #save at 1500 x 2000
@@ -2523,40 +2535,39 @@ anova(OrderEvar_2021_Glmm_Weight_Avg) #not significant
 #### Feeding Guild Graph ####
 
 Relative_Count_Family_Plot_Avg<-Abundance_Family_Guild %>% 
-  mutate(Feeding_Guild_Graph=ifelse(Feeding.Guild=="Insectivores","Predators",ifelse(Feeding.Guild=="","Other",ifelse(Feeding.Guild=="Multi","Other",ifelse(Feeding.Guild=="necrophagous","Scavenger",ifelse(Feeding.Guild=="parasitoids","Parasitoids",ifelse(Feeding.Guild=="phytophagous","Herbivores",ifelse(Correct_Order=="Orthoptera","Herbivores", Feeding.Guild)))))))) %>% 
   filter(Block!="NA" & Correct_Family!="NA") %>% 
   filter(Correct_Order!="unknown"&Correct_Order!="Unknown"&Correct_Order!="Unknown_1"&Correct_Order!="Body_Parts"&Correct_Order!="Body Parts" & Correct_Family!="Unknown") %>% 
-  select(Year,Block,Plot,Grazing_Treatment,Feeding_Guild_Graph,Abundance) %>% 
+  select(Year,Block,Plot,Grazing_Treatment,Guild,Abundance) %>% 
   #add together all data of each orders across grazing treatments 
-  group_by(Year,Plot,Block,Grazing_Treatment,Feeding_Guild_Graph) %>% 
+  group_by(Year,Plot,Block,Grazing_Treatment,Guild) %>% 
   mutate(FeedingGuild_Abundance=sum(Abundance)) %>%
   ungroup() %>% 
-  select(Year,Block,Plot,Grazing_Treatment,Feeding_Guild_Graph,FeedingGuild_Abundance) %>% 
+  select(Year,Block,Plot,Grazing_Treatment,Guild,FeedingGuild_Abundance) %>% 
   unique() %>% 
-  group_by(Year,Block,Grazing_Treatment,Feeding_Guild_Graph) %>% 
+  group_by(Year,Block,Grazing_Treatment,Guild) %>% 
   mutate(AverageAbundance=mean(FeedingGuild_Abundance)) %>%
-  select(Year,Block,Grazing_Treatment,Feeding_Guild_Graph,AverageAbundance) %>% 
+  select(Year,Block,Grazing_Treatment,Guild,AverageAbundance) %>% 
   unique() %>% 
   #add together all data within each grazing treatment for total "plot"count
   group_by(Year,Block,Grazing_Treatment) %>% 
   mutate(Total_Abundance=sum(AverageAbundance)) %>%
   ungroup() %>% 
   mutate(RelativeCount=AverageAbundance/Total_Abundance) %>% 
-  mutate(Trtm=paste(Grazing_Treatment,Feeding_Guild_Graph,sep = "_"))
+  mutate(Trtm=paste(Grazing_Treatment,Guild,sep = "_"))
 
 Relative_Count_Family_Avg<-Relative_Count_Family_Plot_Avg %>%
-  select(Year,Block,Grazing_Treatment,Feeding_Guild_Graph,AverageAbundance) %>% 
-  group_by(Year,Grazing_Treatment,Feeding_Guild_Graph) %>% 
+  select(Year,Block,Grazing_Treatment,Guild,AverageAbundance) %>% 
+  group_by(Year,Grazing_Treatment,Guild) %>% 
   mutate(FeedingGuild_Abundance=sum(AverageAbundance)) %>%
   ungroup() %>% 
   #add together all data within each grazing treatment for total "plot"count
   group_by(Year,Grazing_Treatment) %>% 
   mutate(Total_Abundance=sum(AverageAbundance)) %>%
   ungroup() %>% 
-  select(Year,Grazing_Treatment,Feeding_Guild_Graph,FeedingGuild_Abundance,Total_Abundance) %>% 
+  select(Year,Grazing_Treatment,Guild,FeedingGuild_Abundance,Total_Abundance) %>% 
   unique() %>% 
   mutate(RelativeCount=FeedingGuild_Abundance/Total_Abundance) %>% 
-  group_by(Year,Grazing_Treatment,Feeding_Guild_Graph) %>% 
+  group_by(Year,Grazing_Treatment,Guild) %>% 
   summarise(Average_RelativeCount=mean(RelativeCount)) %>% 
   ungroup() %>% 
   mutate(Grazing_Treatment=ifelse(Grazing_Treatment=="HG","High Impact Grazing",ifelse(Grazing_Treatment=="LG","Destock Grazing",ifelse(Grazing_Treatment=="NG","Cattle Removal",Grazing_Treatment))))
@@ -2564,9 +2575,9 @@ Relative_Count_Family_Avg<-Relative_Count_Family_Plot_Avg %>%
 
 ##reorder bar graphs##
 Relative_Count_Family_Avg$Grazing_Treatment <- factor(Relative_Count_Family_Avg$Grazing_Treatment, levels = c("Cattle Removal", "Destock Grazing", "High Impact Grazing"))
-Relative_Count_Family_Avg$Feeding_Guild_Graph <- factor(Relative_Count_Family_Avg$Feeding_Guild_Graph, levels=c("Other","Fungivores","Omnivores","Parasitoids","Predators","Scavenger","Herbivores"))
+Relative_Count_Family_Avg$Guild <- factor(Relative_Count_Family_Avg$Guild, levels = c("Detritivore","Parasitoid","Predator","Leaf-Chewing Herbivore","Leaf-Mining Herbivore","Pollen/Nectar-Eating Herbivore","Sap-Sucking Herbivore","Wood-Eating Herbivore","Other Herbivore"))
 
-Feeding_Guild_2020_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Feeding_Guild_Graph, position = "stack"))+
+Feeding_Guild_2020_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Guild, position = "stack"))+
   geom_bar(stat="identity")+
   #Label the x-axis "Treatment"
   xlab("Grazing Regime")+
@@ -2574,7 +2585,7 @@ Feeding_Guild_2020_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2020),aes(
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000"), breaks=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), labels=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), name = "Feeding Guild")+
+  scale_fill_manual(values=c("#714c42","#a0897b", "#9CA497","#c9d0c5","#798671","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -2583,7 +2594,7 @@ Feeding_Guild_2020_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2020),aes(
   theme(text = element_text(size = 55),legend.text=element_text(size=45))+
   geom_text(x=1, y=1.2,label="A.2020",size=20)
 
-Feeding_Guild_2021_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Feeding_Guild_Graph, position = "stack"))+
+Feeding_Guild_2021_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Guild, position = "stack"))+
   geom_bar(stat="identity")+
   #Label the x-axis "Treatment"
   xlab("Grazing Regime")+
@@ -2591,7 +2602,7 @@ Feeding_Guild_2021_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2021),aes(
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000"), breaks=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), labels=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), name = "Feeding Guild")+
+  scale_fill_manual(values=c("#503930","#714c42","#a0897b", "#9CA497","#c9d0c5","#798671","#4e6b5d","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -2600,7 +2611,7 @@ Feeding_Guild_2021_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2021),aes(
   theme(text = element_text(size = 55),legend.text=element_text(size=45),axis.title.y=element_blank(),axis.text.y=element_blank())+
   geom_text(x=1, y=1.2,label="B.2021",size=20)
 
-Feeding_Guild_2022_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Feeding_Guild_Graph, position = "stack"))+
+Feeding_Guild_2022_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Guild, position = "stack"))+
   geom_bar(stat="identity")+
   #Label the x-axis "Treatment"
   xlab("Grazing Regime")+
@@ -2608,7 +2619,7 @@ Feeding_Guild_2022_Avg<-ggplot(subset(Relative_Count_Family_Avg,Year==2022),aes(
   ylab("Proportion of Feeding Guilds")+
   theme(legend.background=element_blank())+
   scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
-  scale_fill_manual(values=c("#7B5E7B","#A6A670","#1C1F33", "#C0B9DD","#86836D","#626267","#710000"), breaks=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), labels=c("Fungivores","Herbivores","Omnivores","Parasitoids","Predators","Scavenger","Other"), name = "Feeding Guild")+
+  scale_fill_manual(values=c("#503930","#714c42","#a0897b", "#9CA497","#c9d0c5","#9CA497","#798671","#1E3907"), name = "Feeding Guild")+
   #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
   theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
   #Make the y-axis extend to 50
@@ -2627,19 +2638,19 @@ Feeding_Guild_2020_Avg+
 
 #### Normality: Feeding_Guild Family ####
 
-Normality_RelCov_Family_2020_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph)
+Normality_RelCov_Family_2020_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2020_Avg) 
 ols_test_normality(Normality_RelCov_Family_2020_Avg) #normal
 #check for homoscedascity ---get NAs
 #leveneTest(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 
-Normality_RelCov_Family_2021_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph)
+Normality_RelCov_Family_2021_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2021_Avg) 
 ols_test_normality(Normality_RelCov_Family_2021_Avg) #normal
 #check for homoscedascity --- get NAs
 #leveneTest(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), 1/log(RelativeCount)  ~ Grazing_Treatment*Feeding.Guild)
 
-Normality_RelCov_Family_2022_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"),log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph)
+Normality_RelCov_Family_2022_Avg<- lm(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"),log(RelativeCount)  ~ Grazing_Treatment*Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2022_Avg) 
 ols_test_normality(Normality_RelCov_Family_2022_Avg) #normal
 #check for homoscedascity - get NAs
@@ -2648,21 +2659,17 @@ ols_test_normality(Normality_RelCov_Family_2022_Avg) #normal
 #### Feeding Guild Stats ####
 
 #2020
-RelCov_Family_2020_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph + (1|Block))
+RelCov_Family_2020_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2020"), log(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
 anova(RelCov_Family_2020_Avg, type = 3)
 
 #2021
-RelCov_Family_2021_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph + (1|Block))
+RelCov_Family_2021_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
 anova(RelCov_Family_2021_Avg, type = 3) 
 
 #2022
-RelCov_Family_2022_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Grazing_Treatment*Feeding_Guild_Graph + (1|Block))
+RelCov_Family_2022_Avg <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
 anova(RelCov_Family_2022_Avg, type = 3)
-
-RelCov_Family_2022_Avg_Trt<-lmerTest::lmer(data = subset(Relative_Count_Family_Plot_Avg, Year=="2022"), log(RelativeCount)  ~ Trtm + (1|Block))
-anova(RelCov_Family_2022_Avg_Trt, type = 3)
-###post hoc test for lmer test ##
-summary(glht(RelCov_Family_2022_Avg_Trt, linfct = mcp(Trtm = "Tukey")), test = adjusted(type = "BH"))
+summary(glht(RelCov_Family_2022_Avg, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH"))
 
 #### NMDS using Count x Feeding Guild ####
 
