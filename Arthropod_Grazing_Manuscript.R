@@ -1569,7 +1569,7 @@ Normality_RelCov_Family_2020<- lm(data = subset(Relative_Count_Family_Plot, Year
 ols_plot_resid_hist(Normality_RelCov_Family_2020) 
 ols_test_normality(Normality_RelCov_Family_2020) #normal
 
-Normality_RelCov_Family_2021<- lm(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Grazing_Treatment*Guild)
+Normality_RelCov_Family_2021<- lm(data = subset(Relative_Count_Family_Plot, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Guild)
 ols_plot_resid_hist(Normality_RelCov_Family_2021) 
 ols_test_normality(Normality_RelCov_Family_2021) #normal
 
@@ -1581,7 +1581,7 @@ ols_test_normality(Normality_RelCov_Family_2022) #normal
 RelCov_Family_2020 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2020"), sqrt(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
 anova(RelCov_Family_2020, type = 3) #feeding guild (<2e-16)
 
-RelCov_Family_2021 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), sqrt(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
+RelCov_Family_2021 <- lmerTest::lmer(data = subset(Relative_Count_Family_Plot, Year=="2021"), log(RelativeCount)  ~ Grazing_Treatment*Guild + (1|Block))
 anova(RelCov_Family_2021, type = 3) #grazing (0.002), feeding guild (<2e-16), grazing:feeding guild (0.07)
 summary(glht(RelCov_Family_2021, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #ns
 
@@ -3767,3 +3767,336 @@ Grasshopper_2022_Glmm_Weight_Paddock <- lmer(log(Avg_Paddock_Weight) ~ Grazing_T
 anova(Grasshopper_2022_Glmm_Weight_Paddock) #not significant
 ### post hoc test for lmer test ##
 summary(glht(Grasshopper_2022_Glmm_Weight_Paddock, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) 
+
+
+
+
+#### Presentation Figure (A,B): Average Plot Weight, (C,D): Grasshoppper weight (E,F) Order Proportion by Weight, (G,H): Order Proportion by Cover ####
+
+# 2020 
+Shannon_2020_Weight<-ggplot(subset(CommunityMetrics_Weight_Avg,Year==2020),aes(x=Grazing_Treatment_Fig,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon Diversity")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(axis.title.y=element_text(size = 75),axis.text.y=element_text(size = 75),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")
+  #geom_text(x=0.85, y=1, label="A. 2020",size=20)
+
+# 2021 - Dvac
+#Graph of Weights from dvac by Grazing treatment- 2021
+Shannon_2021_Weight<-ggplot(subset(CommunityMetrics_Weight_Avg,Year==2021),aes(x=Grazing_Treatment_Fig,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon Diversity")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  #geom_text(x=0.85, y=1, label="B. 2021",size=20)+
+  #no grazing is different than high grazing, low grazing is not different than high grazing, no and low grazing not different
+  annotate("text",x=1,y=0.45,label="a",size=30)+ #no grazing
+  annotate("text",x=2,y=0.66,label="ab",size=30)+ #low grazing
+  annotate("text",x=3,y=0.87,label="b",size=30) #high grazing
+
+
+# 2022 - Dvac
+Shannon_2022_Weight<-ggplot(subset(CommunityMetrics_Weight_Avg,Year==2022),aes(x=Grazing_Treatment_Fig,y=Shannon_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Shannon_Mean-Shannon_St_Error,ymax=Shannon_Mean+Shannon_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Shannon Diversity")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  #Make the y-axis extend to 50
+  expand_limits(y=1)+
+  scale_y_continuous(labels = label_number(accuracy = 0.1))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")
+  #geom_text(x=0.85, y=1, label="C. 2022",size=20)
+
+# 2020 Average Plot Weight
+Dvac_2020_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2020),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Biomass (g)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("Cattle Removal","Destock","High Impact Grazing"))+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.6, y=0.5, label="A. 2020 Plot Weight",size=20)
+
+# Average Plot Weight
+Dvac_2021_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2021),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+ 
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("Cattle Removal","Destock","High Impact Grazing"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))+
+  #geom_text(x=1.6, y=0.5, label="B. 2021 Plot Weight",size=20)+
+  #no grazing is different than high grazing, low grazing is different than high grazing, no and low grazing are the same
+  annotate("text",x=1,y=0.14,label="a",size=30)+ #no grazing
+  annotate("text",x=2,y=0.12,label="a",size=30)+ #low grazing
+  annotate("text",x=3,y=0.07,label="b",size=30) #high grazing
+
+# Average Plot Weight
+Dvac_2022_Plot<-ggplot(subset(Weight_by_Grazing_dvac,Year==2022),aes(x=Grazing_Treatment,y=Average_Weight,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge), and fill in the bars with the color grey.  
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Average_Weight-Weight_St_Error,ymax=Average_Weight+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Average Plot Weight (g)")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("Cattle Removal","Destock","High Impact Grazing"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=0.5)+
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 75))
+  #geom_text(x=1.6, y=0.5, label="C. 2022 Plot Weight",size=20)
+
+# 2020 
+Grasshopper_2020_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2020),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab(expression(paste("Individual Grasshopper \n Weight (mg)")))+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  #scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(text = element_text(size = 75),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")
+  #geom_text(x=0.85, y=40, label="A. 2020",size=20)
+
+
+# 2021
+Grasshopper_2021_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2021),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+
+  theme(text = element_text(size = 75),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank())+
+  #geom_text(x=0.85, y=40, label="B. 2021",size=20)
+  annotate("text",x=1,y=16.4,label="a",size=30)+ #no grazing
+  annotate("text",x=2,y=17,label="a",size=30)+ #low grazing
+  annotate("text",x=3,y=10,label="b",size=30) #high grazing
+
+# 2022
+Grasshopper_2022_Weight_Plot<-ggplot(subset(Grasshopper_Weight_PlotAvg_Graph,Year==2022),aes(x=Grazing_Treatment_Fig,y=Weight_Mean,fill=Grazing_Treatment))+
+  #Make a bar graph where the height of the bars is equal to the data (stat=identity) and you preserve the vertical position while adjusting the horizontal(position_dodge)
+  geom_bar(stat="identity",position = "dodge")+
+  #Make an error bar that represents the standard error within the data and place the error bars at position 0.9 and make them 0.2 wide.
+  geom_errorbar(aes(ymin=Weight_Mean-Weight_St_Error,ymax=Weight_Mean+Weight_St_Error),position=position_dodge(),width=0.2,size=2)+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Shannon"
+  ylab("Average Individual Grasshopper Weight (mg)")+
+  theme(legend.background=element_blank())+
+  scale_fill_manual(values=c("#B6AD90","#A4AC86","#656D4A"), labels=c("High Impact Grazing","Cattle Removal","Destock"))+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=40)+ 
+  theme(text = element_text(size = 75),legend.position = "none",axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank())
+  #geom_text(x=0.85, y=40, label="C. 2022",size=20)
+
+# Proportion of Orders by Weight
+Order_Weight_2020<-ggplot(subset(Relative_Weight,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion by Biomass")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#B89984"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.9, y=1.2, label="D. Abundance by Weight",size=20)
+
+Order_Weight_2021<-ggplot(subset(Relative_Weight,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion of Orders")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#B89984"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.9, y=1.2,label="E.Abundance by Weight",size=20)
+
+Order_Weight_2022<-ggplot(subset(Relative_Weight,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeWeight,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion of Orders")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#66676C","#403025","#B89984","#CABEB9","#72544D"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Weight","Plot Weight"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.title.x=element_blank(),axis.text.x=element_blank(),legend.position = "none")+
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.9, y=1.2, label="F.Abundance by Weight",size=20)
+
+Order_Count_2020<-ggplot(subset(Relative_Count,Year==2020),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion by Abundance")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#B89984"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(legend.key = element_rect(size=3), legend.key.size = unit(1,"centimeters"),legend.position="NONE")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.8, y=1.2,label="G.Abundance by Count",size=20)
+
+Order_Count_2021<-ggplot(subset(Relative_Count,Year==2021),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion of Orders")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#B89984"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Orthoptera"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.8, y=1.2, label="H.Abundance by Count",size=20)
+
+Order_Count_2022<-ggplot(subset(Relative_Count,Year==2022),aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Correct_Order, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing  Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion of Orders")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#845749","#FBECC5","#D3DEDF", "#789193","#BABEBF","#66676C","#403025","#B89984","#CABEB9","#72544D"), labels=c("Araneae","Coleoptera","Diptera","Hemiptera","Hymenoptera","Lepidoptera","Neuroptera","Orthoptera","Thysanoptera","Trombiculidae"), name = "Order")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),legend.position = "none")+
+  #Make the y-axis extend to 50
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75))
+  #geom_text(x=1.8, y=1.2, label="I.Abundance by Count",size=20)
+
+
+
+Shannon_2020_Weight+  
+  Shannon_2021_Weight+
+  Shannon_2022_Weight+
+  Dvac_2020_Plot+
+  Dvac_2021_Plot+
+  Dvac_2022_Plot+
+  Grasshopper_2020_Weight_Plot+  
+  Grasshopper_2021_Weight_Plot+
+  Grasshopper_2022_Weight_Plot+
+  Order_Weight_2020 +  
+  Order_Weight_2021+
+  Order_Weight_2022 +
+  Order_Count_2020 +  
+  Order_Count_2021+
+  Order_Count_2022 +
+  plot_layout(ncol = 3,nrow = 5)
+#save at 5000 x 5000
+
+
+Feeding_Guild_2022<-ggplot(Relative_Count_Family,aes(x=Grazing_Treatment,y=Average_RelativeCount,fill=Guild, position = "stack"))+
+  geom_bar(stat="identity")+
+  #Label the x-axis "Treatment"
+  xlab("Grazing Regime")+
+  #Label the y-axis "Species Richness"
+  ylab("Proportion of Feeding Guilds")+
+  theme(legend.background=element_blank())+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 8))+
+  scale_fill_manual(values=c("#503930","#714c42","#a0897b", "#9CA497","#c9d0c5","#9CA497","#798671","#4e6b5d","#1E3907"), name = "Feeding Guild")+
+  #scale_fill_manual(values=c("grey30","grey10"), labels=c("Orthoptera Count","Plot Count"))+
+  theme(legend.key = element_rect(size=5), legend.key.size = unit(3,"centimeters"))+
+  #Make the y-axis extend to 50
+  expand_limits(y=1.2)+
+  scale_y_continuous(labels = label_number(accuracy = 0.25))+
+  theme(text = element_text(size = 75),legend.text=element_text(size=75),axis.title.y=element_blank(),axis.text.y=element_blank())+
+  geom_text(x=1, y=1.2,label="C.2022",size=20)
