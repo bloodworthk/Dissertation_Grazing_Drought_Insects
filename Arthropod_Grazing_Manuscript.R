@@ -3226,7 +3226,16 @@ anova(CCA_Year_Grazing, by = "terms")
 #justifies subsequent univariate tests for axes that are significant
 anova(CCA_Year_Grazing, by = "axis")  
 
-plot(CCA_Year_Grazing)
+
+# better control -- remember to set scaling etc identically
+plot(CCA_Year_Grazing, type="n", scaling="sites")
+text(CCA_Year_Grazing, dis="cn", scaling="sites",cex=1)
+points(CCA_Year_Grazing, pch=21, col="black", bg="blue", cex=1.5, scaling="sites")
+text(CCA_Year_Grazing, "species", col="red", cex=1, scaling="sites")
+
+
+plot(CCA_Year_Grazing,pch = 30, cex = 4)
+dev.off()
 
 #### RDA Year: pseudo rep ####
 
@@ -3282,6 +3291,14 @@ anova(RDA_Year_Grazing, by = "terms")
 anova(RDA_Year_Grazing, by = "axis")  
 
 plot(RDA_Year_Grazing)
+dev.off()
+
+# better control -- remember to set scaling etc identically
+plot(RDA_Year_Grazing, type="n", scaling="sites",xlim = c(-2,2),ylim=c(-2,2))
+text(RDA_Year_Grazing, dis="cn", scaling="sites",cex=1)
+points(RDA_Year_Grazing, pch=21, col="black", bg="blue", cex=1.5, scaling="sites")
+text(RDA_Year_Grazing, "species", col="red", cex=1, scaling="sites")
+
 
 
 #### CCA by Year: n=3 ####
