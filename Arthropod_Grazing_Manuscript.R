@@ -630,7 +630,8 @@ Plot_Weight_D_2020_Glmm <- lmer(sqrt(Plot_Weight) ~ Grazing_Treatment + (1 | Blo
 anova(Plot_Weight_D_2020_Glmm) #not significant
 
 #2021
-Plot_Weight_D_2021_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block) , data = subset(Weight_Data_Summed_dvac,Year==2021))
+Plot_Weight_D_2021_Glmm <- lmer(log(Plot_Weight) ~ Grazing_Treatment + (1 | Block:Grazing_Treatment) , data = subset(Weight_Data_Summed_dvac,Year==2021))
+summary(Plot_Weight_D_2021_Glmm)
 anova(Plot_Weight_D_2021_Glmm) # p=0.003987
 ###post hoc test for lmer test ##
 summary(glht(Plot_Weight_D_2021_Glmm, linfct = mcp(Grazing_Treatment = "Tukey")), test = adjusted(type = "BH")) #NG-LG (p=0.0.56774), #LG-HG (0.00857), NG-HG (0.00256)
@@ -3240,13 +3241,21 @@ dev.off()
 #### RDA Year: pseudo rep ####
 
 RDA_Year<- rda(CCA_Data ~ Year, data=CCA_Meta_Data)
-
 summary(RDA_Year)
+
+##### DB RDA 
+RDA_Year_capscale <- capscale(CCA_Data ~ Year*Grazing_Treatment + Condition(Block), data=CCA_Meta_Data, dist="bray", sqrt.dist=T)
+summary(RDA_Year_capscale)
+anova(RDA_Year_capscale) #is this a good model fit? yes bc significant 
+anova(RDA_Year_capscale,  by = "terms") #type 2
+anova(RDA_Year_capscale,  by = "margin")  #type 3
+
+
 
 #pull scores to use for subsequent univariate analyses
 scores(RDA_Year, c(1:4), scaling=3)
 
-#do some stats
+#do some stats ####New from Karin ####
 #overall model significant; this uses vegan's anova.cca function; if NS, should not run univariate tests.
 anova(RDA_Year)    #ns
 #test significance by terms (= PerMANOVA)
@@ -3254,7 +3263,7 @@ anova(RDA_Year, by = "terms")
 #justifies subsequent univariate tests for axes that are significant
 anova(RDA_Year, by = "axis")  
 
-plot(RDA_Year)
+plot(RDA_Year_capscale)
 
 #### RDA Grazing: pseudo rep  ####
 
@@ -3408,6 +3417,10 @@ anova(RDA_Grazing_Avg, by = "terms")
 plot(RDA_Grazing_Avg)
 
 #### RDA Year and Grazing  n=3 ####
+
+RDA_Year_Grazing_Avg <- rda(CCA_Data_Avg ~ Year*Grazing_Treatment, data=CCA_Meta_Data_Avg)
+
+summary(RDA_Year_Grazing_Avg)
 
 RDA_Year_Grazing_Avg <- rda(CCA_Data_Avg ~ Year*Grazing_Treatment, data=CCA_Meta_Data_Avg)
 
