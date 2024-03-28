@@ -3250,6 +3250,23 @@ anova(RDA_Year_capscale) #is this a good model fit? yes bc significant
 anova(RDA_Year_capscale,  by = "terms") #type 2
 anova(RDA_Year_capscale,  by = "margin")  #type 3
 
+plot(RDA_Year_capscale)
+
+
+plot(RDA_Year_capscale,display = "species")
+
+plot(RDA_Year_capscale, type="n") # Empty plot
+with(CCA_Meta_Data, levels(as.factor(Grazing_Treatment))) #look at levels of grazing treatment (must be factor)
+scl <- 3 ## scaling = 3 (apply number of treatments to scl)
+colvec <- c("red2", "green4", "mediumblue") #create color palet
+plot(RDA_Year_capscale, type = "n", scaling = scl) #blank plot that will use  model data with 3 scales
+with(CCA_Meta_Data, points(RDA_Year_capscale, display = "sites", col = colvec[as.factor(Grazing_Treatment)],scaling = scl, pch = 21, bg = colvec[as.factor(Grazing_Treatment)])) #add in points according to grazing treatments
+text(RDA_Year_capscale, display = "species", scaling = scl, cex = 0.8, col = "black") #add in order text
+with(CCA_Meta_Data, legend("topleft", legend = levels(as.factor(Grazing_Treatment)), bty = "n", col = colvec, pch = 21, pt.bg = colvec)) #add in a legend
+with(CCA_Meta_Data, ordiellipse(RDA_Year_capscale, groups=as.factor(Grazing_Treatment), display="sites", alpha = 127,scaling = scl,kind = "se",conf=0.95, lwd=2,col = colvec[as.factor(Grazing_Treatment)],label = T,bg = colvec[as.factor(Grazing_Treatment)]))#### RDA not working ####
+
+dev.off()
+
 
 
 #pull scores to use for subsequent univariate analyses
@@ -3263,7 +3280,7 @@ anova(RDA_Year, by = "terms")
 #justifies subsequent univariate tests for axes that are significant
 anova(RDA_Year, by = "axis")  
 
-plot(RDA_Year_capscale)
+
 
 #### RDA Grazing: pseudo rep  ####
 
